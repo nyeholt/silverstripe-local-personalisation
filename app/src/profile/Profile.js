@@ -8,6 +8,8 @@ const MAX_FREQ = 3;
 
 const MAX_TAGS = 50;
 
+const VERSION = 1;
+
 class Profile {
 
     /**
@@ -45,6 +47,52 @@ class Profile {
     }
 
     evaluateRequest() {
+        this.checkRules();
+
+        this.checkContent();
+    }
+
+    checkContent() {
+        // find all items that are marked as special
+        const elements = document.getElementsByClassName('lp-item');
+        const myTags = this.data.tags;
+
+        if (!elements) {
+            return;
+        }
+
+        for (let j = 0; j < elements.length; j++) {
+            const item = elements[j];
+            const tagMatch = item.getAttribute('data-lp-tags');
+            if (tagMatch && tagMatch.length > 0) {
+                let hasMatch = true;
+                const matchTags = tagMatch.split(' ');
+                for (let i = 0; i < matchTags.length; i++) {
+                    if (matchTags[i].length <= 0) {
+                        continue;
+                    }
+                    if (!myTags[matchTags[i]]) {
+                        hasMatch = false;
+                        break;
+                    }
+                }
+
+                if (hasMatch) {
+                    let matchType = 'show';
+                    if (item.hasAttribute('data-lp-type')) {
+                        matchType = item.getAttribute('data-lp-type');
+                    }
+                    if (matchType === 'show') {
+                        item.classList.add('lp-show');
+                    } else {
+                        item.classList.add('lp-hide');
+                    }
+                }
+            }
+        }
+    }
+
+    checkRules() {
         for (let rule of this.ruleset) {
             let matchData = null;
             if (rule.selector) {
@@ -52,7 +100,6 @@ class Profile {
             } else if (rule.regex) {
                 matchData = this.isMatch(rule);
             }
-
             if (matchData) {
                 this.applyRule(rule, matchData);
             }
@@ -121,11 +168,12 @@ class Profile {
     }
 
     addTag(tag) {
+        let normalisedTag = tag.replace(/[^A-Za-z0-9_-]/g, '-').toLowerCase();
         if (!this.data['tags']) {
             this.data.tags = {};
         }
 
-        let existing = this.data.tags[tag];
+        let existing = this.data.tags[normalisedTag];
 
         if (!existing) {
             existing = {
@@ -137,8 +185,13 @@ class Profile {
         while (existing.freq.length >= MAX_FREQ) {
             existing.freq.pop();
         }
-        existing.freq.unshift((new Date()).getTime());
-        this.data.tags[tag] = existing;
+        existing.freq.unshift({
+            t: (new Date()).getTime(),
+            u: location.href,
+            r: tag
+        });
+
+        this.data.tags[normalisedTag] = existing;
     }
 
     findOldestTag() {
@@ -155,10 +208,10 @@ class Profile {
             }
 
             // oldest time is the last in the list
-            let t = existing.freq[existing.freq.length - 1];
+            let item = existing.freq[existing.freq.length - 1];
 
-            if (!oldTime || oldTime > t) {
-                oldTime = t;
+            if (!oldTime || oldTime > item.t) {
+                oldTime = item.t;
                 oldestTag = tag;
             }
         }
@@ -173,8 +226,10 @@ class Profile {
         if (localData && localData.length > 0) {
             const profileData = JSON.parse(localData);
             if (profileData.uid) {
-                this.data = profileData;
-                return true;
+                if (profileData.version && profileData.version == VERSION) {
+                    this.data = profileData;
+                    return true;
+                }
             }
         }
         return false;
@@ -183,6 +238,7 @@ class Profile {
     writeToStore() {
         if (!this.data) {
             this.data = {
+                version: VERSION,
                 uid: uuidv4(),
                 tags: {}
             };

@@ -1,3 +1,9 @@
+.lp-show {
+  display: block; }
+
+.lp-hide {
+  display: none; }
+
 .autocomplete-suggestions {
     text-align: left; cursor: default; border: 1px solid #ccc; border-top: 0; background: #fff; box-shadow: -1px 1px 3px rgba(0,0,0,.1);
 
