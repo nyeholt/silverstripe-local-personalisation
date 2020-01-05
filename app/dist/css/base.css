@@ -1,0 +1,13 @@
+
+
+.position-relative {
+    position: relative;
+}
+
+.position-absolute {
+    position: absolute;
+}
+
+.img-responsive {
+    max-width: 100%;
+}
