@@ -30,10 +30,19 @@ const profile = loadProfile([
         apply: [
             '$0',
         ]
+    },
+    {
+        name: "JourneyPlanner",
+        appliesTo: "click",
+        selector: '.dropdown-menu a[href*="/journey"]',
+        apply: [
+            '$0',
+            '$1',
+            'journey-planner',
+        ]
+
     }
 ]);
 
 profile.evaluateRequest();
 profile.save();
-
-console.log(profile);

@@ -2,13 +2,13 @@ import * as uuidv4 from "uuid/v4";
 
 let profile;
 
-const PROFILE_NAME = 'user_state';
+const PROFILE_NAME = 'lp_user_state';
 
 const MAX_FREQ = 3;
 
 const MAX_TAGS = 50;
 
-const VERSION = 1;
+const VERSION = 2;
 
 class Profile {
 
@@ -16,7 +16,7 @@ class Profile {
      * {
      *    tags: {
      *      tag: {
-     *          freq: [
+     *          acc: [
      *              date-added
      *          ]
      *      }
@@ -32,7 +32,7 @@ class Profile {
      *      appliesTo: 'url' | 'content' | 'useragent' | 'click'
      *      regex: '',
      *      selector: 'string'
-     *      attribute: 'attr-name' | '#content'
+     *      attribute: 'attr-name' | '#content' // the attribute to use as the value, or #content for innerHTML
      *      apply: [
      *          'tag',
      *          integer index into regex
@@ -42,13 +42,20 @@ class Profile {
      */
     ruleset;
 
+
+    /**
+     * A mapping of rule selector to an index into
+     * ruleset
+     */
+    clickRules;
+
     constructor(rules) {
         this.ruleset = rules;
+        this.clickRules = {};
     }
 
     evaluateRequest() {
         this.checkRules();
-
         this.checkContent();
     }
 
@@ -92,17 +99,48 @@ class Profile {
         }
     }
 
+    bindClickEvents() {
+        document.addEventListener('click', (ev) => {
+            let applied = false;
+            for (let selector in this.clickRules) {
+                const tgt = ev.target;
+                if (tgt.matches(selector)) {
+                    // get the rule and apply it
+                    const ruleIndex = this.clickRules[selector];
+                    const linkData = [
+                        tgt.getAttribute('href'),
+                        tgt.innerHTML,
+                    ];
+                    this.applyRule(this.ruleset[ruleIndex], linkData);
+                    applied = true;
+                }
+            }
+            if (applied) {
+                this.save();
+            }
+        })
+
+    }
+
     checkRules() {
-        for (let rule of this.ruleset) {
+        for (let i = 0; i < this.ruleset.length; i++) {
+            const rule = this.ruleset[i];
             let matchData = null;
-            if (rule.selector) {
+            if (rule.appliesTo === 'click' && rule.selector) {
+                this.clickRules[rule.selector] = i;
+            } else if (rule.selector) {
                 matchData = this.isRelevant(rule);
             } else if (rule.regex) {
                 matchData = this.isMatch(rule);
             }
+
             if (matchData) {
                 this.applyRule(rule, matchData);
             }
+        }
+
+        if (Object.keys(this.clickRules).length > 0) {
+            this.bindClickEvents();
         }
     }
 
@@ -160,6 +198,7 @@ class Profile {
                 if (tag.indexOf('$') >= 0 && matchData && matchData.length > 0) {
                     matchData.forEach((match, j) => {
                         tag = tag.replace("$" + j, match);
+                        tag = tag ? tag.trim() : "";
                     });
                 }
                 this.addTag(tag);
@@ -177,15 +216,15 @@ class Profile {
 
         if (!existing) {
             existing = {
-                freq: []
+                acc: []
             };
         }
 
         // get rid of the oldest
-        while (existing.freq.length >= MAX_FREQ) {
-            existing.freq.pop();
+        while (existing.acc.length >= MAX_FREQ) {
+            existing.acc.pop();
         }
-        existing.freq.unshift({
+        existing.acc.unshift({
             t: (new Date()).getTime(),
             u: location.href,
             r: tag
@@ -203,12 +242,12 @@ class Profile {
         for (let tag in this.data.tags) {
             let existing = this.data.tags[tag];
 
-            if (!existing.freq || existing.freq.length === 0) {
+            if (!existing.acc || existing.acc.length === 0) {
                 return tag;
             }
 
             // oldest time is the last in the list
-            let item = existing.freq[existing.freq.length - 1];
+            let item = existing.acc[existing.acc.length - 1];
 
             if (!oldTime || oldTime > item.t) {
                 oldTime = item.t;
