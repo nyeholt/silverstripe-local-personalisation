@@ -2,7 +2,6 @@ import { loadProfile } from "./profile/Profile";
 
 import './style/profile.scss';
 
-
 const profile = loadProfile([
     {
         name: "RouteTimetable",
@@ -33,16 +32,32 @@ const profile = loadProfile([
     },
     {
         name: "JourneyPlanner",
-        appliesTo: "click",
-        selector: '.dropdown-menu a[href*="/journey"]',
+        event: "click",
+        target: '.dropdown-menu a[href*="/journey"]',
         apply: [
             '$0',
             '$1',
             'journey-planner',
         ]
-
+    },
+    {
+        name: "Favourite Stop",
+        event: "click",
+        target: '.lp-stop-fvt',
+        appliesTo: 'url',
+        regex: 'stop/(\\d+)/([^/]+)',
+        apply: [
+            'favouriter',
+            'fvt-stop-$1',
+            'fvt-stop-route-$2',
+            'stop-favourite',
+        ]
     }
 ]);
 
 profile.evaluateRequest();
 profile.save();
+
+window.DEBUG_SHOW_PROFILE = function () {
+    console.log(profile.data);
+}

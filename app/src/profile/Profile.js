@@ -4,7 +4,7 @@ let profile;
 
 const PROFILE_NAME = 'lp_user_state';
 
-const MAX_FREQ = 3;
+const MAX_FREQ = 8;
 
 const MAX_TAGS = 50;
 
@@ -72,6 +72,8 @@ class Profile {
             const item = elements[j];
             const tagMatch = item.getAttribute('data-lp-tags');
             if (tagMatch && tagMatch.length > 0) {
+                let numberOfTimes = item.getAttribute('data-lp-times') || 1;
+
                 let hasMatch = true;
                 const matchTags = tagMatch.split(' ');
                 for (let i = 0; i < matchTags.length; i++) {
@@ -81,6 +83,15 @@ class Profile {
                     if (!myTags[matchTags[i]]) {
                         hasMatch = false;
                         break;
+                    }
+
+                    // check the count
+                    if (numberOfTimes > 1) {
+                        let timesTriggered = myTags[matchTags[i]].acc || [];
+                        if (numberOfTimes >= timesTriggered.length) {
+                            hasMatch = false;
+                            break;
+                        }
                     }
                 }
 
@@ -107,11 +118,29 @@ class Profile {
                 if (tgt.matches(selector)) {
                     // get the rule and apply it
                     const ruleIndex = this.clickRules[selector];
-                    const linkData = [
-                        tgt.getAttribute('href'),
-                        tgt.innerHTML,
-                    ];
-                    this.applyRule(this.ruleset[ruleIndex], linkData);
+                    const rule = this.ruleset[ruleIndex];
+
+                    let matchData;
+
+                    if (rule.selector) {
+                        matchData = this.isRelevant(rule);
+                    } else if (rule.regex) {
+                        matchData = this.isMatch(rule);
+                    }
+
+                    if (!matchData) {
+                        matchData = [
+                            tgt.getAttribute('href'),
+                            tgt.innerHTML,
+                        ];
+                    } else {
+                        matchData.push(tgt.getAttribute('href'));
+                        matchData.push(tgt.innerHTML);
+                    }
+
+                    console.log("Profile.js: apply from event match", matchData);
+
+                    this.applyRule(rule, matchData);
                     applied = true;
                 }
             }
@@ -126,8 +155,9 @@ class Profile {
         for (let i = 0; i < this.ruleset.length; i++) {
             const rule = this.ruleset[i];
             let matchData = null;
-            if (rule.appliesTo === 'click' && rule.selector) {
-                this.clickRules[rule.selector] = i;
+            if (rule.event === 'click' && rule.target) {
+                // we only evaluate this rule on a specific click action
+                this.clickRules[rule.target] = i;
             } else if (rule.selector) {
                 matchData = this.isRelevant(rule);
             } else if (rule.regex) {
@@ -135,6 +165,7 @@ class Profile {
             }
 
             if (matchData) {
+                console.log("Profile.js: apply from page match", matchData);
                 this.applyRule(rule, matchData);
             }
         }
@@ -264,7 +295,7 @@ class Profile {
         const localData = localStorage.getItem(PROFILE_NAME);
         if (localData && localData.length > 0) {
             const profileData = JSON.parse(localData);
-            if (profileData.uid) {
+            if (profileData && profileData.uid) {
                 if (profileData.version && profileData.version == VERSION) {
                     this.data = profileData;
                     return true;
