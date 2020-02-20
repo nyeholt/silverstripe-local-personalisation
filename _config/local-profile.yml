@@ -1,0 +1,6 @@
+---
+name: local-profile-routes
+---
+SilverStripe\Control\Director:
+  rules:
+    __personalisation: Symbiote\Personalisation\PersonalisationController

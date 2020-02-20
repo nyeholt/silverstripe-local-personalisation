@@ -11,7 +11,7 @@ class PersonalisationManagement extends ModelAdmin
     private static $menu_title = 'Personalisation';
 
     private static $managed_models = [
-        ProfleRuleSet::class,
+        ProfileRuleSet::class,
         ProfileRule::class
     ];
 

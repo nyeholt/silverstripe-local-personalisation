@@ -4,7 +4,7 @@ let profile;
 
 const PROFILE_NAME = 'lp_user_state';
 
-const MAX_FREQ = 8;
+const MAX_FREQ = 10;
 
 const MAX_TAGS = 50;
 

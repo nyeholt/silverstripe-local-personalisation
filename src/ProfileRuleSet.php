@@ -4,8 +4,10 @@ namespace Symbiote\Personalisation;
 
 use SilverStripe\ORM\DataObject;
 
-class ProfleRuleSet extends DataObject
+class ProfileRuleSet extends DataObject
 {
+    private static $table_name = 'ProfileRuleSet';
+
     private static $db = [
         'Title' => 'Varchar(128)',
         'Active' => 'Boolean'
