@@ -42,6 +42,11 @@ class Profile {
      */
     ruleset;
 
+    /**
+     * What rule set version are we on?
+     */
+    version;
+
 
     /**
      * A mapping of rule selector to an index into
@@ -49,8 +54,9 @@ class Profile {
      */
     clickRules;
 
-    constructor(rules) {
+    constructor(rules, version) {
         this.ruleset = rules;
+        this.version = version || 1;
         this.clickRules = {};
     }
 
@@ -296,7 +302,7 @@ class Profile {
         if (localData && localData.length > 0) {
             const profileData = JSON.parse(localData);
             if (profileData && profileData.uid) {
-                if (profileData.version && profileData.version == VERSION) {
+                if (profileData.version && profileData.version == this.versionString()) {
                     this.data = profileData;
                     return true;
                 }
@@ -308,7 +314,7 @@ class Profile {
     writeToStore() {
         if (!this.data) {
             this.data = {
-                version: VERSION,
+                version: this.versionString(),
                 uid: uuidv4(),
                 tags: {}
             };
@@ -323,6 +329,10 @@ class Profile {
         }
 
         localStorage.setItem(PROFILE_NAME, JSON.stringify(this.data));
+    }
+
+    versionString() {
+        return VERSION + "." + this.version;
     }
 
     save() {

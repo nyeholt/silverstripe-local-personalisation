@@ -28,18 +28,18 @@ class ProfileRule extends DataObject
     ];
 
     private static $applies_to = [
-        'content',
-        'url',
-        'useragent',
-        'click'
+        'content' => 'Page content',
+        'url' => 'Current page URL',
+        'useragent' => 'Browser user agent',
+        'click' => 'A user click event',
     ];
 
     public function getCMSFields()
     {
         $appliesOpt = ArrayLib::valuekey(self::config()->applies_to);
 
-        $eventDoc = 'For click events, the $0 and $1 attributes are set to the href attribute and innerHTML of the link, unless the selector data is also provided';
-        $eventDoc .= 'In this case, the rules associated with using a CSS selector + attribute, OR a regex match apply. ';
+        $eventDoc = '<p>For click events, the $0 and $1 attributes are set to the href attribute and innerHTML of the link, unless the selector data is also provided</p>';
+        $eventDoc .= '<p>In this case, the rules associated with using a CSS selector + attribute, OR a regex match apply.</p> ';
 
         $fields = FieldList::create([
             TextField::create('Title', 'Rule name'),

@@ -10,11 +10,11 @@ class ProfileRuleSet extends DataObject
 
     private static $db = [
         'Title' => 'Varchar(128)',
+        'VersionMarker' => 'Int',
         'Active' => 'Boolean'
     ];
 
     private static $many_many = [
         'Rules' => ProfileRule::class
     ];
-
 }
