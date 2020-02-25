@@ -24,6 +24,8 @@ class ProfileRule extends DataObject
         'Target' => 'Varchar(255)',
         'Regex' => 'Varchar(2000)',
         'Attribute' => 'Varchar(255)',
+        // 'Timeframe' => 'Varchar(128)',
+        'Timeblock' => 'Varchar(128)',
         'Apply' => MultiValueField::class,
     ];
 
@@ -58,11 +60,16 @@ class ProfileRule extends DataObject
                 LiteralField::create('event_doc', $eventDoc),
                 TextField::create('Target', 'CSS selector to bind events to'),
             ]),
+            $timeFields = ToggleCompositeField::create('time_fields', 'Time options', [
+                TextField::create('Timeblock', 'Timeblock')
+                    ->setRightTitle('ie 8:00-10:30 to indicate that this is only triggered during this window of the day')
+            ])
         ]);
 
         $selectorFields->setStartClosed($this->AppliesTo != 'content' || strlen($this->Selector) === 0);
         $regexFields->setStartClosed(strlen($this->Regex) === 0);
         $eventFields->setStartClosed(strlen($this->Target) === 0);
+        $timeFields->setStartClosed(strlen($this->Timeblock) === 0);
 
         $this->extend('updateCMSFields', $fields);
 
