@@ -12,7 +12,6 @@ class PersonalisationManagement extends ModelAdmin
 
     private static $managed_models = [
         ProfileRuleSet::class,
-        ProfileRule::class
+        // ProfileRule::class
     ];
-
 }

@@ -25,6 +25,7 @@ class ProfileRule extends DataObject
         'Regex' => 'Varchar(2000)',
         'Attribute' => 'Varchar(255)',
         // 'Timeframe' => 'Varchar(128)',
+        'EventData' => 'Varchar(255)',
         'Timeblock' => 'Varchar(128)',
         'Apply' => MultiValueField::class,
     ];
@@ -38,14 +39,12 @@ class ProfileRule extends DataObject
 
     public function getCMSFields()
     {
-        $appliesOpt = ArrayLib::valuekey(self::config()->applies_to);
-
-        $eventDoc = '<p>For click events, the $0 and $1 attributes are set to the href attribute and innerHTML of the link, unless the selector data is also provided</p>';
-        $eventDoc .= '<p>In this case, the rules associated with using a CSS selector + attribute, OR a regex match apply.</p> ';
+        $eventDoc = '<p>For click events, the $0 and $1 attributes are set to the href attribute and innerHTML of the link.</p>';
+        $eventDoc .= '<p>However, if you set a selector or regex above, the rules around those are used for populating attributes for tags</p> ';
 
         $fields = FieldList::create([
             TextField::create('Title', 'Rule name'),
-            DropdownField::create('AppliesTo', 'Applies to data', $appliesOpt),
+            DropdownField::create('AppliesTo', 'Applies to data', self::config()->applies_to),
             MultiValueTextField::create('Apply', 'Tags to apply')
                 ->setRightTitle('Use $0, $1 etc for parameter replacements'),
             $selectorFields = ToggleCompositeField::create('selector_rules', 'CSS Based', [

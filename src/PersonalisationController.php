@@ -11,7 +11,7 @@ class PersonalisationController extends Controller
         'rules',
     ];
 
-    public function rules(HTTPRequest $request)
+    public static function build_rules()
     {
         $activeRules = ProfileRuleSet::get()->filter('Active', 1)->sort('ID ASC');
 
@@ -28,7 +28,7 @@ class PersonalisationController extends Controller
                 ];
 
                 if ($rule->Target) {
-                    $ruleData = array_merge($ruleData, [
+                    $data = array_merge($data, [
                         'event' => 'click',
                         'target' => $rule->Target,
                     ]);
@@ -51,7 +51,12 @@ class PersonalisationController extends Controller
             'rules' => $ruleData,
             'version' => implode('.', $version)
         ];
+        return $set;
+    }
 
+    public function rules(HTTPRequest $request)
+    {
+        $set = self::build_rules();
         $this->response->addHeader('Content-type', 'text/javascript');
         return 'window.PERSONSALISATION_RULESET = ' . json_encode($set) . ';';
     }

@@ -182,16 +182,16 @@ class Profile {
     }
 
     isMatch(rule) {
-        let checkAgainst = '';
+        let checkAgainst = null;
         if (rule.appliesTo == 'url') {
             checkAgainst = location.href;
-        } else if (rule.appliesTo == 'content') {
+        } else if (rule.appliesTo == 'content' || rule.appliesTo == 'click') {
             checkAgainst = document.querySelector('body').innerHTML;
         } else if (rule.appliesTo == 'useragent') {
             checkAgainst = navigator.userAgent;
         }
 
-        if (checkAgainst.length <= 0) {
+        if (!checkAgainst || checkAgainst.length <= 0) {
             return null;
         }
 
@@ -341,8 +341,8 @@ class Profile {
 }
 
 
-export function loadProfile(ruleset) {
-    profile = new Profile(ruleset);
+export function loadProfile(ruleset, version) {
+    profile = new Profile(ruleset, version);
     if (!profile.loadFromStore()) {
         profile.writeToStore();
     }
