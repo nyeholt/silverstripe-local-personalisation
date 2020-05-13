@@ -23,6 +23,10 @@ composer require symbiote/silverstripe-local-profile:~1.0
 
 Rules are defined in the CMS 
 
+They can be triggered for;
+
+* A regex match against content
+
 
 ### Applying rules
 
@@ -31,14 +35,11 @@ It is up to you as a developer to apply these rules to content. The key aspects
 * add the lp-item css class 
 * Add the 'data-lp-tags' attribute to list (comma separated) the tags applied on the profile
   to trigger this element
-* Add the data-lp-type attribute to indicate whether to show (default) or hide the element 
+* Add the data-lp-type attribute to indicate whether to "show" (default) or "hide" the element 
 * Add the data-lp-times attribute (optional) to indicate how many times the user's profile 
   has to have been tagged 
 * Add the data-lp-timeframe attribute to indicate what timeframe (ie -1 week) the tagging
   must have happened
-
-There is an extension (Profileable) that has fields for capturing this information and converting
-it 
 
 
 ```

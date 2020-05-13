@@ -74,14 +74,17 @@ class Profile {
             return;
         }
 
-        for (let j = 0; j < elements.length; j++) {
-            const item = elements[j];
-            const tagMatch = item.getAttribute('data-lp-tags');
-            if (tagMatch && tagMatch.length > 0) {
-                let numberOfTimes = item.getAttribute('data-lp-times') || 1;
-
+        /**
+         * Do the passed in tags match the tags on a
+         * given element?
+         *
+         * @param {string} tags
+         * @param {number} times
+         */
+        const matchesTags = function (tags, numberOfTimes) {
+            if (tags && tags.length > 0) {
                 let hasMatch = true;
-                const matchTags = tagMatch.split(' ');
+                const matchTags = tags.split(' ');
                 for (let i = 0; i < matchTags.length; i++) {
                     if (matchTags[i].length <= 0) {
                         continue;
@@ -94,23 +97,45 @@ class Profile {
                     // check the count
                     if (numberOfTimes > 1) {
                         let timesTriggered = myTags[matchTags[i]].acc || [];
-                        if (numberOfTimes >= timesTriggered.length) {
+                        if (numberOfTimes > timesTriggered.length) {
                             hasMatch = false;
                             break;
                         }
                     }
                 }
 
-                if (hasMatch) {
-                    let matchType = 'show';
-                    if (item.hasAttribute('data-lp-type')) {
-                        matchType = item.getAttribute('data-lp-type');
-                    }
-                    if (matchType === 'show') {
-                        item.classList.add('lp-show');
-                    } else {
-                        item.classList.add('lp-hide');
-                    }
+                return hasMatch;
+            }
+        };
+
+        // figure out based on show / hide rules what
+        // to do to elements
+        for (let j = 0; j < elements.length; j++) {
+            const item = elements[j];
+            const tagMatch = item.getAttribute('data-lp-show-tags');
+            const showMatches = matchesTags(item.getAttribute('data-lp-show-tags'), item.getAttribute('data-lp-show-times') || 1);
+            const hideMatches = matchesTags(item.getAttribute('data-lp-hide-tags'), item.getAttribute('data-lp-hide-times') || 1);
+
+            // see if the content has a preference for show / hide
+            if (showMatches || hideMatches) {
+                let matchType = 'show';
+                if (item.hasAttribute('data-lp-prefer')) {
+                    matchType = item.getAttribute('data-lp-prefer');
+                }
+                // checking explicit show/hide preference first, otherwise
+                // fall back to 'show' being higher preference than 'hide'
+                if (matchType === 'show' && showMatches) {
+                    item.classList.remove('lp-hide');
+                    item.classList.add('lp-show');
+                } else if (matchType === 'hide' && hideMatches) {
+                    item.classList.remove('lp-show');
+                    item.classList.add('lp-hide');
+                } else if (showMatches) {
+                    item.classList.remove('lp-hide');
+                    item.classList.add('lp-show');
+                } else if (hideMatches) {
+                    item.classList.remove('lp-show');
+                    item.classList.add('lp-hide');
                 }
             }
         }
