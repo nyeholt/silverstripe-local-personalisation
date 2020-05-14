@@ -25,6 +25,7 @@ class PersonalisationController extends Controller
                     'name' => $rule->Title,
                     'apply' => $rule->Apply ? $rule->Apply->getValues() : [],
                     'appliesTo' => $rule->AppliesTo,
+                    'time' => $rule->TimeOnPage,
                 ];
 
                 if ($rule->Target) {

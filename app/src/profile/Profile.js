@@ -54,6 +54,11 @@ class Profile {
      */
     clickRules;
 
+    /**
+     * Captures time based rules
+     */
+    timeRules;
+
     constructor(rules, version) {
         this.ruleset = rules;
         this.version = version || 1;
@@ -63,6 +68,26 @@ class Profile {
     evaluateRequest() {
         this.checkRules();
         this.checkContent();
+
+        setTimeout(() => {
+            console.log("Profile.js: checking 3s rules");
+            this.checkRules(3);
+        }, 3000);
+
+        setTimeout(() => {
+            console.log("Profile.js: checking 10s rules");
+            this.checkRules(10);
+        }, 10000);
+
+        setTimeout(() => {
+            console.log("Profile.js: checking 30s rules");
+            this.checkRules(30);
+        }, 30000);
+
+        setTimeout(() => {
+            console.log("Profile.js: checking 120s rules");
+            this.checkRules(120);
+        }, 120000);
     }
 
     checkContent() {
@@ -154,7 +179,7 @@ class Profile {
                     let matchData;
 
                     if (rule.selector) {
-                        matchData = this.isRelevant(rule);
+                        matchData = this.isCssMatch(rule);
                     } else if (rule.regex) {
                         matchData = this.isMatch(rule);
                     }
@@ -182,15 +207,18 @@ class Profile {
 
     }
 
-    checkRules() {
+    checkRules(forTime) {
         for (let i = 0; i < this.ruleset.length; i++) {
             const rule = this.ruleset[i];
+            if ((forTime && rule.time != forTime) || (!forTime && rule.time)) {
+                continue;
+            }
             let matchData = null;
             if (rule.event === 'click' && rule.target) {
                 // we only evaluate this rule on a specific click action
                 this.clickRules[rule.target] = i;
             } else if (rule.selector) {
-                matchData = this.isRelevant(rule);
+                matchData = this.isCssMatch(rule);
             } else if (rule.regex) {
                 matchData = this.isMatch(rule);
             }
@@ -206,6 +234,11 @@ class Profile {
         }
     }
 
+    /**
+     * Handles regex based content matches
+     *
+     * @param {ProfileRule} rule
+     */
     isMatch(rule) {
         let checkAgainst = null;
         if (rule.appliesTo == 'url') {
@@ -225,7 +258,12 @@ class Profile {
         return matchInfo;
     }
 
-    isRelevant(rule) {
+    /**
+     * Handles CSS based pattern matching
+     *
+     * @param {ProfileRule} rule
+     */
+    isCssMatch(rule) {
         let data = [];
 
         if (rule.selector && rule.attribute) {

@@ -6,6 +6,7 @@ namespace Symbiote\Personalisation;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\ORM\ArrayLib;
@@ -20,13 +21,15 @@ class ProfileRule extends DataObject
     private static $db = [
         'Title' => 'Varchar(128)',
         'Selector' => 'Varchar(128)',
-        'AppliesTo' => "Enum('content,url,useragent,click')",
+        'AppliesTo' => "Enum('content,url,useragent,click,referrer')",
+        // "ExtractFrom" => "Enum('content,url,useragent,referrer')",
         'Target' => 'Varchar(255)',
         'Regex' => 'Varchar(2000)',
         'Attribute' => 'Varchar(255)',
         // 'Timeframe' => 'Varchar(128)',
         'EventData' => 'Varchar(255)',
         'Timeblock' => 'Varchar(128)',
+        'TimeOnPage' => 'Int',
         'Apply' => MultiValueField::class,
     ];
 
@@ -44,7 +47,7 @@ class ProfileRule extends DataObject
 
         $fields = FieldList::create([
             TextField::create('Title', 'Rule name'),
-            DropdownField::create('AppliesTo', 'Applies to data', self::config()->applies_to),
+            DropdownField::create('AppliesTo', 'Applies to', self::config()->applies_to),
             MultiValueTextField::create('Apply', 'Tags to apply')
                 ->setRightTitle('Use $0, $1 etc for parameter replacements'),
             $selectorFields = ToggleCompositeField::create('selector_rules', 'CSS Based', [
@@ -60,15 +63,17 @@ class ProfileRule extends DataObject
                 TextField::create('Target', 'CSS selector to bind events to'),
             ]),
             $timeFields = ToggleCompositeField::create('time_fields', 'Time options', [
-                TextField::create('Timeblock', 'Timeblock')
-                    ->setRightTitle('ie 8:00-10:30 to indicate that this is only triggered during this window of the day')
+                DropdownField::create('TimeOnPage', 'Time on page', ['0' => '0', '3' => '3', '10' => '10', '30' => '30', '120' => '120'])
+                    ->setRightTitle("User must be on page at least this many seconds before tagging")
+                // TextField::create('Timeblock', 'Timeblock')
+                //     ->setRightTitle('(NOT IMPLEMENTED) ie 8:00-10:30 to indicate that this is only triggered during this window of the day')
             ])
         ]);
 
         $selectorFields->setStartClosed($this->AppliesTo != 'content' || strlen($this->Selector) === 0);
         $regexFields->setStartClosed(strlen($this->Regex) === 0);
         $eventFields->setStartClosed(strlen($this->Target) === 0);
-        $timeFields->setStartClosed(strlen($this->Timeblock) === 0);
+        $timeFields->setStartClosed(!$this->TimeOnPage);
 
         $this->extend('updateCMSFields', $fields);
 
