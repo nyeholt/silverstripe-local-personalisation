@@ -208,38 +208,65 @@ class Profile {
     }
 
     checkRules(forTime) {
+        let matched = false;
         for (let i = 0; i < this.ruleset.length; i++) {
             const rule = this.ruleset[i];
             if ((forTime && rule.time != forTime) || (!forTime && rule.time)) {
                 continue;
             }
-            let matchData = null;
+            let isMatch = false;
             if (rule.event === 'click' && rule.target) {
                 // we only evaluate this rule on a specific click action
                 this.clickRules[rule.target] = i;
             } else if (rule.selector) {
-                matchData = this.isCssMatch(rule);
+                isMatch = this.isCssMatch(rule);
             } else if (rule.regex) {
-                matchData = this.isMatch(rule);
+                isMatch = this.isMatch(rule);
             }
 
-            if (matchData) {
-                console.log("Profile.js: apply from page match", matchData);
-                this.applyRule(rule, matchData);
+            if (isMatch) {
+                matched = true;
+                let matchData = this.extractData(rule);
+                if (matchData && matchData.length > 0) {
+                    console.log("Profile.js: apply from page match", matchData);
+                    this.applyRule(rule, matchData);
+                }
             }
         }
 
-        if (Object.keys(this.clickRules).length > 0) {
+        if (matched) {
+            this.save();
+        }
+
+        // only bind click on the first time through
+        if (!forTime && Object.keys(this.clickRules).length > 0) {
             this.bindClickEvents();
         }
     }
 
-    /**
-     * Handles regex based content matches
-     *
-     * @param {ProfileRule} rule
-     */
-    isMatch(rule) {
+    extractData(rule) {
+        let extractor = rule.extractor;
+
+        let data = [];
+        if (extractor.selector && extractor.attribute) {
+            let matches = document.querySelectorAll(extractor.selector);
+
+            matches.forEach((elem) => {
+                if (extractor.attribute === '#content') {
+                    data.push(elem.innerHTML);
+                } else {
+                    data.push(elem.getAttribute(extractor.attribute));
+                }
+            });
+        } else if (extractor.regex) {
+            let checkAgainst = this.getContentFor(extractor);
+            // check the regex
+            data = (new RegExp(rule.regex)).exec(checkAgainst);
+        }
+        return data;
+    }
+
+    getContentFor(rule) {
         let checkAgainst = null;
         if (rule.appliesTo == 'url') {
             checkAgainst = location.href;
@@ -248,14 +275,19 @@ class Profile {
         } else if (rule.appliesTo == 'useragent') {
             checkAgainst = navigator.userAgent;
         }
+        return checkAgainst;
+    }
 
-        if (!checkAgainst || checkAgainst.length <= 0) {
-            return null;
-        }
-
+    /**
+     * Handles regex based content matches
+     *
+     * @param {ProfileRule} rule
+     */
+    isMatch(rule) {
+        let checkAgainst = this.getContentFor(rule);
         // check the regex
         const matchInfo = (new RegExp(rule.regex)).exec(checkAgainst);
-        return matchInfo;
+        return matchInfo && matchInfo.length > 0;
     }
 
     /**
@@ -269,16 +301,8 @@ class Profile {
         if (rule.selector && rule.attribute) {
             let matches = document.querySelectorAll(rule.selector);
 
-            matches.forEach((elem) => {
-                if (rule.attribute === '#content') {
-                    data.push(elem.innerHTML);
-                } else {
-                    data.push(elem.getAttribute(rule.attribute));
-                }
-            });
+            return matches.length > 0;
         }
-
-        return data.length > 0 ? data : null;
     }
 
     /**

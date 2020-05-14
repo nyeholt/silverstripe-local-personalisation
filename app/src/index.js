@@ -60,7 +60,6 @@ if (window.PERSONSALISATION_RULESET) {
     ];
 
     profile.evaluateRequest();
-    profile.save();
 
     window.DEBUG_SHOW_PROFILE = function () {
         console.log(profile.data);

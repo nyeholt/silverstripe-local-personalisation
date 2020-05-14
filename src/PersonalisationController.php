@@ -37,12 +37,19 @@ class PersonalisationController extends Controller
 
                 if ($rule->Selector) {
                     $data['selector'] = $rule->Selector;
-                    $data['attribute'] = $rule->Attribute;
                 }
 
                 if ($rule->Regex) {
                     $data['regex'] = $rule->Regex;
                 }
+
+                $extractor = [
+                    'appliesTo' => $rule->ExtractFrom,
+                    'selector' => $rule->ExtractSelector,
+                    'attribute' => $rule->Attribute,
+                    'regex' => $rule->ExtractRegex,
+                ];
+                $data['extractor'] = $extractor;
 
                 $ruleData[] = $data;
             }
