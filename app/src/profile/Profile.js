@@ -137,7 +137,6 @@ class Profile {
         // to do to elements
         for (let j = 0; j < elements.length; j++) {
             const item = elements[j];
-            const tagMatch = item.getAttribute('data-lp-show-tags');
             const showMatches = matchesTags(item.getAttribute('data-lp-show-tags'), item.getAttribute('data-lp-show-times') || 1);
             const hideMatches = matchesTags(item.getAttribute('data-lp-hide-tags'), item.getAttribute('data-lp-hide-times') || 1);
 
@@ -270,6 +269,8 @@ class Profile {
         let checkAgainst = null;
         if (rule.appliesTo == 'url') {
             checkAgainst = location.href;
+        } else if (rule.appliesTo == 'referrer') {
+            checkAgainst = document.referrer;
         } else if (rule.appliesTo == 'content' || rule.appliesTo == 'click') {
             checkAgainst = document.querySelector('body').innerHTML;
         } else if (rule.appliesTo == 'useragent') {

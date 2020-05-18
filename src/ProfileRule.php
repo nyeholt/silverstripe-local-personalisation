@@ -41,6 +41,7 @@ class ProfileRule extends DataObject
         'content' => 'Page content',
         'url' => 'Current page URL',
         'useragent' => 'Browser user agent',
+        'referrer' => 'Referrer',
         'click' => 'A user click event',
     ];
 
@@ -67,7 +68,7 @@ class ProfileRule extends DataObject
             ]),
             $timeFields = ToggleCompositeField::create('time_fields', 'Time options', [
                 DropdownField::create('TimeOnPage', 'Time on page', ['0' => '0', '3' => '3', '10' => '10', '30' => '30', '120' => '120'])
-                    ->setRightTitle("User must be on page at least this many seconds before tagging")
+                    ->setRightTitle("User must be on page at least this many seconds before tagging occurs")
                 // TextField::create('Timeblock', 'Timeblock')
                 //     ->setRightTitle('(NOT IMPLEMENTED) ie 8:00-10:30 to indicate that this is only triggered during this window of the day')
             ]),
