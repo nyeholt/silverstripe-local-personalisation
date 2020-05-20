@@ -49,3 +49,14 @@ It is up to you as a developer to apply these rules to content. The key aspects
 </div>
 
 ```
+
+
+## Events
+
+The following events are triggered and can be responded to in custom code
+
+* local_profile_match_tag
+* local_profile_apply_rule
+* local_profile_add_tag
+
+Bind to these as `document.addEventListener('local_profile_add_tag', function (eventData) {})`

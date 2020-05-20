@@ -152,6 +152,7 @@ class Profile {
                     hideMatches
                 };
 
+                // trigger global event
                 console.log("Profile.js: Trigger local_profile_match_tag", tagDetail);
                 this.triggerEvent('local_profile_match_tag', tagDetail);
 
