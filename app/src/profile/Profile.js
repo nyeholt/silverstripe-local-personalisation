@@ -108,14 +108,13 @@ class Profile {
          */
         const matchesTags = function (tags, numberOfTimes) {
             if (tags && tags.length > 0) {
-                let hasMatch = true;
+                const matchedTags = [];
                 const matchTags = tags.split(' ');
                 for (let i = 0; i < matchTags.length; i++) {
                     if (matchTags[i].length <= 0) {
                         continue;
                     }
                     if (!myTags[matchTags[i]]) {
-                        hasMatch = false;
                         break;
                     }
 
@@ -123,13 +122,13 @@ class Profile {
                     if (numberOfTimes > 1) {
                         let timesTriggered = myTags[matchTags[i]].acc || [];
                         if (numberOfTimes > timesTriggered.length) {
-                            hasMatch = false;
                             break;
                         }
                     }
+                    matchedTags.push(matchTags[i]);
                 }
 
-                return hasMatch;
+                return matchedTags.length > 0 ? matchedTags : null;
             }
         };
 
@@ -146,6 +145,16 @@ class Profile {
                 if (item.hasAttribute('data-lp-prefer')) {
                     matchType = item.getAttribute('data-lp-prefer');
                 }
+
+                const tagDetail = {
+                    matchType,
+                    showMatches,
+                    hideMatches
+                };
+
+                console.log("Profile.js: Trigger local_profile_match_tag", tagDetail);
+                this.triggerEvent('local_profile_match_tag', tagDetail);
+
                 // checking explicit show/hide preference first, otherwise
                 // fall back to 'show' being higher preference than 'hide'
                 if (matchType === 'show' && showMatches) {
@@ -175,28 +184,32 @@ class Profile {
                     const ruleIndex = this.clickRules[selector];
                     const rule = this.ruleset[ruleIndex];
 
-                    let matchData;
+                    let isMatch = false;
 
                     if (rule.selector) {
-                        matchData = this.isCssMatch(rule);
+                        isMatch = this.isCssMatch(rule);
                     } else if (rule.regex) {
-                        matchData = this.isMatch(rule);
+                        isMatch = this.isMatch(rule);
                     }
 
-                    if (!matchData) {
-                        matchData = [
-                            tgt.getAttribute('href'),
-                            tgt.innerHTML,
-                        ];
-                    } else {
-                        matchData.push(tgt.getAttribute('href'));
-                        matchData.push(tgt.innerHTML);
+                    if (isMatch) {
+                        let matchData = this.extractData(rule);
+                        if (!matchData) {
+                            matchData = [
+                                tgt.getAttribute('href'),
+                                tgt.innerHTML,
+                            ];
+                        } else {
+                            matchData.push(tgt.getAttribute('href'));
+                            matchData.push(tgt.innerHTML);
+                        }
+                        if (matchData && matchData.length > 0) {
+                            console.log("Profile.js: apply from event match", matchData);
+
+                            this.applyRule(rule, matchData);
+                            applied = true;
+                        }
                     }
-
-                    console.log("Profile.js: apply from event match", matchData);
-
-                    this.applyRule(rule, matchData);
-                    applied = true;
                 }
             }
             if (applied) {
@@ -210,7 +223,8 @@ class Profile {
         let matched = false;
         for (let i = 0; i < this.ruleset.length; i++) {
             const rule = this.ruleset[i];
-            if ((forTime && rule.time != forTime) || (!forTime && rule.time)) {
+            const execTime = parseInt(rule.time);
+            if ((forTime && execTime != forTime) || (!forTime && execTime)) {
                 continue;
             }
             let isMatch = false;
@@ -317,6 +331,7 @@ class Profile {
      */
     applyRule(rule, matchData) {
         if (rule.apply && rule.apply.length > 0) {
+            this.triggerEvent('local_profile_apply_rule', rule);
             // do some replacements for each match data
             for (let i = 0; i < rule.apply.length; i++) {
                 let tag = rule.apply[i];
@@ -349,11 +364,16 @@ class Profile {
         while (existing.acc.length >= MAX_FREQ) {
             existing.acc.pop();
         }
-        existing.acc.unshift({
+
+        const newTag = {
             t: (new Date()).getTime(),
             u: location.href,
             r: tag
-        });
+        };
+
+        this.triggerEvent('local_profile_add_tag', newTag);
+
+        existing.acc.unshift(newTag);
 
         this.data.tags[normalisedTag] = existing;
     }
@@ -426,6 +446,15 @@ class Profile {
     save() {
         this.writeToStore();
     }
+
+    triggerEvent(name, properties, context) {
+        if (!context) {
+            context = document;
+        }
+        var param = properties ? { detail: properties } : null;
+        var event = new CustomEvent(name, param);
+        context.dispatchEvent(event);
+    }
 }
 
 
@@ -446,3 +475,29 @@ export function getProfile() {
     return profile;
 }
 
+
+
+/**
+ * CustomEvent polyfill
+ */
+(function () {
+
+    if (!Element.prototype.matches) {
+        Element.prototype.matches = Element.prototype.msMatchesSelector ||
+            Element.prototype.webkitMatchesSelector;
+    }
+
+
+    if (typeof window.CustomEvent === "function") return false;
+
+    function CustomEvent(event, params) {
+        params = params || { bubbles: false, cancelable: false, detail: undefined };
+        var evt = document.createEvent('CustomEvent');
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return evt;
+    }
+
+    CustomEvent.prototype = window.Event.prototype;
+
+    window.CustomEvent = CustomEvent;
+})();

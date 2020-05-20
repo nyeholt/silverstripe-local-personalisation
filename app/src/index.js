@@ -65,4 +65,6 @@ if (window.PERSONSALISATION_RULESET) {
         console.log(profile.data);
     }
 
+} else {
+    console.warn("Profile.js: PERSONSALISATION_RULESET not found");
 }
