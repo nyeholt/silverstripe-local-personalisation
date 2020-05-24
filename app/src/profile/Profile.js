@@ -43,6 +43,20 @@ class Profile {
     ruleset;
 
     /**
+     * [{
+     *      title: '',
+     *      lat: '',
+     *      lon: ''
+     * }]
+     */
+    points;
+
+    /**
+     * Same as above, but sorted in distance order
+     */
+    sortedPoints;
+
+    /**
      * What rule set version are we on?
      */
     version;
@@ -59,15 +73,46 @@ class Profile {
      */
     timeRules;
 
-    constructor(rules, version) {
+    /**
+     * {
+     *  latitude,
+     *  longitude
+     * }
+     */
+    myPosition;
+
+    constructor(rules, points, version) {
         this.ruleset = rules;
+        this.points = points;
         this.version = version || 1;
         this.clickRules = {};
+
     }
 
     evaluateRequest() {
         this.checkRules();
         this.checkContent();
+
+        if (this.points.length > 0 && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                if (position.coords) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    let distancePoints = [];
+                    for (let i = 0; i < this.points.length; i++) {
+                        let point = this.points[i];
+                        point.distance = this.distance(lat, lon, point.lat, point.lon);
+                        distancePoints.push(point);
+                    }
+                    this.sortedPoints = distancePoints.sort((a, b) => {
+                        return a.distance < b.distance ? -1 : (a.distance == b.distance ? 0 : 1);
+                    });
+
+                    this.checkLocation();
+                }
+            });
+        }
 
         setTimeout(() => {
             console.log("Profile.js: checking 3s rules");
@@ -88,6 +133,67 @@ class Profile {
             console.log("Profile.js: checking 120s rules");
             this.checkRules(120);
         }, 120000);
+    }
+
+    checkRules(forTime) {
+        let matched = false;
+        for (let i = 0; i < this.ruleset.length; i++) {
+            const rule = this.ruleset[i];
+            const execTime = parseInt(rule.time);
+            if ((forTime && execTime != forTime) || (!forTime && execTime)) {
+                continue;
+            }
+            let isMatch = false;
+            if (rule.event === 'click' && rule.target) {
+                // we only evaluate this rule on a specific click action
+                this.clickRules[rule.target] = i;
+            } else if (rule.selector) {
+                isMatch = this.isCssMatch(rule);
+            } else if (rule.regex) {
+                isMatch = this.isMatch(rule);
+            }
+
+            if (isMatch) {
+                matched = true;
+                let matchData = this.extractData(rule);
+                if (matchData && matchData.length > 0) {
+                    console.log("Profile.js: apply from page match", matchData);
+                    this.applyRule(rule, matchData);
+                }
+            }
+        }
+
+        if (matched) {
+            this.save();
+        }
+
+        // only bind click on the first time through
+        if (!forTime && Object.keys(this.clickRules).length > 0) {
+            this.bindClickEvents();
+        }
+    }
+
+    checkLocation() {
+        let matched = false;
+        for (let i = 0; i < this.ruleset.length; i++) {
+            const rule = this.ruleset[i];
+            let isMatch = false;
+            if (rule.appliesTo == 'location') {
+                isMatch = this.nearestPoint(rule);
+            }
+
+            if (isMatch) {
+                matched = true;
+                let matchData = this.extractData(rule);
+                if (matchData && matchData.length > 0) {
+                    console.log("Profile.js: apply from page match", matchData);
+                    this.applyRule(rule, matchData);
+                }
+            }
+        }
+        if (matched) {
+            this.save();
+        }
     }
 
     checkContent() {
@@ -220,43 +326,6 @@ class Profile {
 
     }
 
-    checkRules(forTime) {
-        let matched = false;
-        for (let i = 0; i < this.ruleset.length; i++) {
-            const rule = this.ruleset[i];
-            const execTime = parseInt(rule.time);
-            if ((forTime && execTime != forTime) || (!forTime && execTime)) {
-                continue;
-            }
-            let isMatch = false;
-            if (rule.event === 'click' && rule.target) {
-                // we only evaluate this rule on a specific click action
-                this.clickRules[rule.target] = i;
-            } else if (rule.selector) {
-                isMatch = this.isCssMatch(rule);
-            } else if (rule.regex) {
-                isMatch = this.isMatch(rule);
-            }
-
-            if (isMatch) {
-                matched = true;
-                let matchData = this.extractData(rule);
-                if (matchData && matchData.length > 0) {
-                    console.log("Profile.js: apply from page match", matchData);
-                    this.applyRule(rule, matchData);
-                }
-            }
-        }
-
-        if (matched) {
-            this.save();
-        }
-
-        // only bind click on the first time through
-        if (!forTime && Object.keys(this.clickRules).length > 0) {
-            this.bindClickEvents();
-        }
-    }
 
     extractData(rule) {
         let extractor = rule.extractor;
@@ -276,10 +345,19 @@ class Profile {
             let checkAgainst = this.getContentFor(extractor);
             // check the regex
             data = (new RegExp(rule.regex)).exec(checkAgainst);
+        } else if (extractor.appliesTo == 'location') {
+            const point = this.nearestPoint(extractor);
+            console.log("Found point ", point);
+            data.push(point.title);
         }
+
         return data;
     }
 
+    /**
+     *
+     * @param {Rule|Extractor} rule
+     */
     getContentFor(rule) {
         let checkAgainst = null;
         if (rule.appliesTo == 'url') {
@@ -292,6 +370,27 @@ class Profile {
             checkAgainst = navigator.userAgent;
         }
         return checkAgainst;
+    }
+
+    nearestPoint(rule) {
+        if (this.points && this.points.length > 0) {
+            // points is sorted, so if we're just 'match nearest', just use the first result
+            if (rule.matchnearest) {
+                return this.points[0];
+            }
+            // we must have a distance set if no matchnearest rule
+            if (!rule.maxdistance) {
+                return;
+            }
+            for (let i = 0; i < this.points.length; i++) {
+                if (this.points[i].distance < rule.maxdistance) {
+                    return this.points[i];
+                }
+            }
+        } else {
+            console.warn("Profile.js: No position information available to check location rules");
+        }
+
     }
 
     /**
@@ -456,11 +555,37 @@ class Profile {
         var event = new CustomEvent(name, param);
         context.dispatchEvent(event);
     }
+
+    distance(lat1, lon1, lat2, lon2, unit) {
+        if (!unit) {
+            unit = "K";
+        }
+        if ((lat1 == lat2) && (lon1 == lon2)) {
+            return 0;
+        }
+        else {
+            var radlat1 = Math.PI * lat1 / 180;
+            var radlat2 = Math.PI * lat2 / 180;
+            var theta = lon1 - lon2;
+            var radtheta = Math.PI * theta / 180;
+            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+            if (dist > 1) {
+                dist = 1;
+            }
+            dist = Math.acos(dist);
+            dist = dist * 180 / Math.PI;
+            dist = dist * 60 * 1.1515;
+            if (unit == "K") { dist = dist * 1.609344 }
+            if (unit == "N") { dist = dist * 0.8684 }
+            return dist;
+        }
+    }
+
 }
 
 
-export function loadProfile(ruleset, version) {
-    profile = new Profile(ruleset, version);
+export function loadProfile(ruleset, points, version) {
+    profile = new Profile(ruleset, points, version);
     if (!profile.loadFromStore()) {
         profile.writeToStore();
     }

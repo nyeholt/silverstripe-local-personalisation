@@ -15,6 +15,7 @@ class ProfileRuleSet extends DataObject
     ];
 
     private static $many_many = [
-        'Rules' => ProfileRule::class
+        'Rules' => ProfileRule::class,
+        'Points' => ProfileRulePoint::class,
     ];
 }

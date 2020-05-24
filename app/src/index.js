@@ -4,7 +4,7 @@ import './style/profile.scss';
 
 if (window.PERSONSALISATION_RULESET) {
 
-    const profile = loadProfile(window.PERSONSALISATION_RULESET.rules, window.PERSONSALISATION_RULESET.version);
+    const profile = loadProfile(window.PERSONSALISATION_RULESET.rules, window.PERSONSALISATION_RULESET.points, window.PERSONSALISATION_RULESET.version);
 
     const dummy_Data = [
         {

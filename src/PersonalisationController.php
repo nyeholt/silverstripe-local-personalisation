@@ -18,6 +18,8 @@ class PersonalisationController extends Controller
         $version = [];
 
         $ruleData = [];
+        $pointData = [];
+
         foreach ($activeRules as $ruleset) {
             $version[] = $ruleset->VersionMarker;
             foreach ($ruleset->Rules() as $rule) {
@@ -43,20 +45,44 @@ class PersonalisationController extends Controller
                     $data['regex'] = $rule->Regex;
                 }
 
+                if ($rule->AppliesTo == 'location') {
+                    $data['matchnearest'] = $rule->NearestPoint;
+                    $data['maxdistance'] = $rule->MaxPointDistance;
+                }
+
                 $extractor = [
                     'appliesTo' => $rule->ExtractFrom,
                     'selector' => $rule->ExtractSelector,
                     'attribute' => $rule->Attribute,
                     'regex' => $rule->ExtractRegex,
                 ];
+
+                if ($rule->ExtractFrom == 'location') {
+                    $extractor['matchnearest'] = $rule->NearestPoint;
+                    $extractor['maxdistance'] = $rule->MaxPointDistance;
+                }
+
                 $data['extractor'] = $extractor;
 
                 $ruleData[] = $data;
+            }
+            foreach ($ruleset->Points() as $point) {
+                if (!strpos($point->Location, ',')) {
+                    continue;
+                }
+                list($lat, $lon) = explode(",", $point->Location);
+                $data = [
+                    'title' => $point->Title,
+                    'lat' => (double) $lat,
+                    'lon' => (double) $lon
+                ];
+                $pointData[] = $data;
             }
         }
 
         $set = [
             'rules' => $ruleData,
+            'points' => $pointData,
             'version' => implode('.', $version)
         ];
         return $set;
