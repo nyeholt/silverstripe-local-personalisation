@@ -37,7 +37,6 @@ class ProfileRule extends DataObject
         'ExtractRegex' => 'Varchar(2000)',
         // 'Timeframe' => 'Varchar(128)',
         'EventData' => 'Varchar(255)',
-        'Timeblock' => 'Varchar(128)',
         'TimeOnPage' => 'Int',
         'Apply' => MultiValueField::class,
     ];

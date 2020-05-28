@@ -117,21 +117,25 @@ class Profile {
         setTimeout(() => {
             console.log("Profile.js: checking 3s rules");
             this.checkRules(3);
+            this.checkContent();
         }, 3000);
 
         setTimeout(() => {
             console.log("Profile.js: checking 10s rules");
             this.checkRules(10);
+            this.checkContent();
         }, 10000);
 
         setTimeout(() => {
             console.log("Profile.js: checking 30s rules");
             this.checkRules(30);
+            this.checkContent();
         }, 30000);
 
         setTimeout(() => {
             console.log("Profile.js: checking 120s rules");
             this.checkRules(120);
+            this.checkContent();
         }, 120000);
     }
 
@@ -212,7 +216,7 @@ class Profile {
          * @param {string} tags
          * @param {number} times
          */
-        const matchesTags = function (tags, numberOfTimes) {
+        const matchesTags = function (tags, numberOfTimes, timeSince) {
             if (tags && tags.length > 0) {
                 const matchedTags = [];
                 const matchTags = tags.split(' ');
@@ -224,9 +228,22 @@ class Profile {
                         break;
                     }
 
+                    const thisTag = myTags[matchTags[i]];
+                    const validHits = [];
+                    if (timeSince > 0) {
+                        const timeSinceMs = timeSince * 1000;
+                        validHits = thisTag.acc.filter((item) => {
+                            return item.t > timeSinceMs;
+                        });
+                    } else {
+                        validHits = thisTag.acc;
+                    }
+
+                    console.log("Profile.js: Comparing valid hits ", validHits);
+
                     // check the count
                     if (numberOfTimes > 1) {
-                        let timesTriggered = myTags[matchTags[i]].acc || [];
+                        let timesTriggered = validHits || [];
                         if (numberOfTimes > timesTriggered.length) {
                             break;
                         }
@@ -242,8 +259,8 @@ class Profile {
         // to do to elements
         for (let j = 0; j < elements.length; j++) {
             const item = elements[j];
-            const showMatches = matchesTags(item.getAttribute('data-lp-show-tags'), item.getAttribute('data-lp-show-times') || 1);
-            const hideMatches = matchesTags(item.getAttribute('data-lp-hide-tags'), item.getAttribute('data-lp-hide-times') || 1);
+            const showMatches = matchesTags(item.getAttribute('data-lp-show-tags'), item.getAttribute('data-lp-show-times') || 1, item.getAttribute('data-lp-show-timeblock') || 0);
+            const hideMatches = matchesTags(item.getAttribute('data-lp-hide-tags'), item.getAttribute('data-lp-hide-times') || 1, item.getAttribute('data-lp-hide-timeblock') || 0);
 
             // see if the content has a preference for show / hide
             if (showMatches || hideMatches) {
@@ -347,7 +364,6 @@ class Profile {
             data = (new RegExp(rule.regex)).exec(checkAgainst);
         } else if (extractor.appliesTo == 'location') {
             const point = this.nearestPoint(extractor);
-            console.log("Found point ", point);
             data.push(point.title);
         }
 

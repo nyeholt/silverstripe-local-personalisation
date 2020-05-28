@@ -19,6 +19,8 @@ class PersonalisationExtension extends DataExtension
         'HideTags' => 'Varchar',
         'ShowCount' => 'Int',
         'HideCount' => 'Int',
+        'ShowTimeblock' => 'Varchar',
+        'HideTimeblock' => 'Varchar',
         'ShowPreference' => 'Varchar',
         'InitState' => 'Varchar',
     ];
@@ -40,6 +42,8 @@ class PersonalisationExtension extends DataExtension
             TextField::create('ShowCount', 'Show count')->setRightTitle('How many times the user has touched a tag for it to trigger show rules on item'),
             TextField::create('HideTags', 'Hide tags')->setRightTitle('Hide if content is tagged with these values (comma separated)'),
             TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
+            TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
+            TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
             DropdownField::create('ShowPreference', 'Display preference', $prefOpts)->setRightTitle('Preferred show/hide option if multiple tags match'),
             DropdownField::create('InitState', 'Initial display state', $prefOpts)->setEmptyString('Default')->setRightTitle('If this should be displayed in a specific state initially'),
         ]);
@@ -69,6 +73,14 @@ class PersonalisationExtension extends DataExtension
         if ($hide) {
             $attrs[] = 'data-lp-hide-times="' . Convert::raw2htmlatt($owner->HideCount) . '"';
             $attrs[] = 'data-lp-hide-tags="' . Convert::raw2htmlatt(str_replace(' ', '', $hide)) . '"';
+        }
+
+        if ($owner->ShowTimeblock) {
+            $attrs[] = 'data-lp-show-timeblock="' . strtotime($owner->ShowTimeblock) . '"';
+        }
+
+        if ($owner->HideTimeblock) {
+            $attrs[] = 'data-lp-hide-timeblock="' . strtotime($owner->HideTimeblock) . '"';
         }
 
         return implode(" ", $attrs);
