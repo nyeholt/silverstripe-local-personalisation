@@ -219,7 +219,8 @@ class Profile {
         const matchesTags = function (tags, numberOfTimes, timeSince) {
             if (tags && tags.length > 0) {
                 const matchedTags = [];
-                const matchTags = tags.split(' ');
+                const requireAllTags = tags[0] === '+';
+                const matchTags = tags.replace("+", "").replace(" ", "").split(',');
                 for (let i = 0; i < matchTags.length; i++) {
                     if (matchTags[i].length <= 0) {
                         continue;
@@ -251,7 +252,9 @@ class Profile {
                     matchedTags.push(matchTags[i]);
                 }
 
-                return matchedTags.length > 0 ? matchedTags : null;
+                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) :  matchedTags.length > 0;
+
+                return hasMatch ? matchedTags : null;
             }
         };
 
@@ -308,7 +311,9 @@ class Profile {
                     const ruleIndex = this.clickRules[selector];
                     const rule = this.ruleset[ruleIndex];
 
-                    let isMatch = false;
+                    // click events are considered true unless
+                    // there's a specific match being looked for
+                    let isMatch = true;
 
                     if (rule.selector) {
                         isMatch = this.isCssMatch(rule);
