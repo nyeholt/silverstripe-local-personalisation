@@ -382,6 +382,8 @@ class Profile {
         } else if (extractor.appliesTo == 'location') {
             const point = this.nearestPoint(extractor);
             data.push(point.title);
+        } else if (extractor.appliesTo == 'none') {
+            data.push(document.title);
         }
 
         return data;

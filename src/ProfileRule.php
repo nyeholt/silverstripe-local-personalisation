@@ -22,7 +22,7 @@ class ProfileRule extends DataObject
         'Title' => 'Varchar(128)',
 
         'AppliesTo' => "Enum('content,url,useragent,click,referrer,location')",
-        "ExtractFrom" => "Enum('content,url,useragent,referrer,location')",
+        "ExtractFrom" => "Enum('none,content,url,useragent,referrer,location')",
         'Target' => 'Varchar(255)',
 
         'Selector' => 'Varchar(128)',
@@ -42,6 +42,7 @@ class ProfileRule extends DataObject
     ];
 
     private static $applies_to = [
+        'none' => "No content extraction",
         'content' => 'Page content',
         'url' => 'Current page URL',
         'useragent' => 'Browser user agent',
@@ -117,7 +118,6 @@ class ProfileRule extends DataObject
         $timeFields->setStartClosed(!$this->TimeOnPage);
 
         $extractFields = ToggleCompositeField::create('extract_fields', 'Extraction rules', [
-            LiteralField::create('extract_help', '<p class="form__field-label">Rules for extracting content for tagging if different from above</p>'),
             DropdownField::create('ExtractFrom', 'Extract content from', self::config()->applies_to),
             TextField::create('ExtractSelector', 'CSS Selector'),
             TextField::create('Attribute', 'Element attribute extracted')
