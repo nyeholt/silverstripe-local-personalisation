@@ -446,7 +446,7 @@ class Profile {
     isCssMatch(rule) {
         let data = [];
 
-        if (rule.selector && rule.attribute) {
+        if (rule.selector) {
             let matches = document.querySelectorAll(rule.selector);
 
             return matches.length > 0;
