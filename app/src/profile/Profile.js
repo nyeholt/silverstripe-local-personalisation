@@ -262,8 +262,20 @@ class Profile {
         // to do to elements
         for (let j = 0; j < elements.length; j++) {
             const item = elements[j];
-            const showMatches = matchesTags(item.getAttribute('data-lp-show-tags'), item.getAttribute('data-lp-show-times') || 1, item.getAttribute('data-lp-show-timeblock') || 0);
-            const hideMatches = matchesTags(item.getAttribute('data-lp-hide-tags'), item.getAttribute('data-lp-hide-times') || 1, item.getAttribute('data-lp-hide-timeblock') || 0);
+            const showOpts = [
+                item.getAttribute('data-lp-show-tags'),
+                item.getAttribute('data-lp-show-times') || 1,
+                item.getAttribute('data-lp-show-timeblock') || 0
+            ];
+
+            const hideOpts = [
+                item.getAttribute('data-lp-hide-tags'),
+                item.getAttribute('data-lp-hide-times') || 1,
+                item.getAttribute('data-lp-hide-timeblock') || 0
+            ];
+
+            const showMatches = matchesTags.apply(showOpts);
+            const hideMatches = matchesTags.apply(hideOpts);
 
             // see if the content has a preference for show / hide
             if (showMatches || hideMatches) {
