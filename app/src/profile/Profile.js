@@ -274,8 +274,8 @@ class Profile {
                 item.getAttribute('data-lp-hide-timeblock') || 0
             ];
 
-            const showMatches = matchesTags.apply(showOpts);
-            const hideMatches = matchesTags.apply(hideOpts);
+            const showMatches = matchesTags.apply(this, showOpts);
+            const hideMatches = matchesTags.apply(this, hideOpts);
 
             // see if the content has a preference for show / hide
             if (showMatches || hideMatches) {
