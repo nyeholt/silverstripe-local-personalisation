@@ -225,22 +225,29 @@ class Profile {
                     if (matchTags[i].length <= 0) {
                         continue;
                     }
-                    if (!myTags[matchTags[i]]) {
+
+                    const negated = matchTags[i][0] == '!';
+                    const findTag = matchTags[i].replace("!", "");
+
+                    // if we didn't find the tags in my list of tags,
+                    // AND this tag isn't being used in the 'not present' sense.
+                    // we shoulding continue
+                    if ((!myTags[findTag] && !negated) || (myTags[findTag] && negated)) {
                         break;
                     }
 
-                    const thisTag = myTags[matchTags[i]];
+                    console.log("Profile.Js: " + matchTags[i] + " matched profile");
+
+                    const thisTag = myTags[findTag];
                     const validHits = [];
-                    if (timeSince > 0) {
+                    if (timeSince > 0 && thisTag) {
                         const timeSinceMs = timeSince * 1000;
                         validHits = thisTag.acc.filter((item) => {
                             return item.t > timeSinceMs;
                         });
                     } else {
-                        validHits = thisTag.acc;
+                        validHits = thisTag ? thisTag.acc : [];
                     }
-
-                    console.log("Profile.js: Comparing valid hits ", validHits);
 
                     // check the count
                     if (numberOfTimes > 1) {
@@ -249,6 +256,8 @@ class Profile {
                             break;
                         }
                     }
+
+                    // we want to match inclusive of a negation flag
                     matchedTags.push(matchTags[i]);
                 }
 

@@ -37,10 +37,12 @@ class PersonalisationExtension extends DataExtension
             'hide' => 'Hide',
         ];
 
+        $syntax = 'Use + to require all tags to match, and use ! to indicate matching if this tag is "not" present';
+
         $fields->addFieldsToTab('Root.Personalisation', [
-            TextField::create('ShowTags', 'Display tags')->setRightTitle('Show if content is tagged with these values (comma separated)'),
+            TextField::create('ShowTags', 'Display tags')->setRightTitle('Show if content is tagged with any of these values (comma separated). ' . $syntax),
             TextField::create('ShowCount', 'Show count')->setRightTitle('How many times the user has touched a tag for it to trigger show rules on item'),
-            TextField::create('HideTags', 'Hide tags')->setRightTitle('Hide if content is tagged with these values (comma separated)'),
+            TextField::create('HideTags', 'Hide tags')->setRightTitle('Hide if content is tagged with these values (comma separated). ' . $syntax),
             TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
             TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
             TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
