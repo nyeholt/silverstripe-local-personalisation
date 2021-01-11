@@ -1,6 +1,6 @@
 {
-    "name": "symbiote/silverstripe-local-profile",
-    "description": "Builds a profile of a site user in their browser",
+    "name": "symbiote/silverstripe-local-personalisation",
+    "description": "Builds a profile of a site user in their browser, to be used for content personalisation",
     "type": "silverstripe-vendormodule",
     "keywords": [
         "silverstripe",
