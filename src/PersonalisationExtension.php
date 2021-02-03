@@ -21,6 +21,7 @@ class PersonalisationExtension extends DataExtension
         'HideCount' => 'Int',
         'ShowTimeblock' => 'Varchar',
         'HideTimeblock' => 'Varchar',
+        'TimeWindow' => MultiValueField::class,
         'ShowPreference' => 'Varchar',
         'InitState' => 'Varchar',
     ];
@@ -54,6 +55,7 @@ class PersonalisationExtension extends DataExtension
                 TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
                 TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
                 TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
+                MultiValueTextField::create('TimeWindow', 'Time window')->setRightTitle("Time windows this is applicable for, eg 07:00-10:00"),
                 DropdownField::create('ShowPreference', 'Display preference', $prefOpts)->setRightTitle('Preferred show/hide option if multiple tags match'),
                 DropdownField::create('InitState', 'Initial display state', $prefOpts)->setEmptyString('Default')->setRightTitle('If this should be displayed in a specific state initially'),
             ];
@@ -106,6 +108,25 @@ class PersonalisationExtension extends DataExtension
         if ($hide) {
             $attrs[] = 'data-lp-hide-times="' . Convert::raw2htmlatt($owner->HideCount) . '"';
             $attrs[] = 'data-lp-hide-tags="' . Convert::raw2htmlatt(str_replace(' ', '', $hide)) . '"';
+        }
+
+        if ($owner->TimeWindow) {
+            // how many seconds after midnight is this relevant for?
+            $windows = [];
+            foreach ($owner->TimeWindow->getValues() as $window) {
+                if (preg_match("/\d\d:\d\d\s*-\s*\d\d:\d\d/", $window)) {
+                    list($start, $end) = preg_split("/\s*-\s*/", $window);
+                    $startTime = strtotime(date("Y-m-d " . $start));
+                    $endTime = strtotime(date("Y-m-d " . $start));
+                    $thisAm = strtotime(date('Y-m-d 00:00:00'));
+
+                    $windows[] = ($startTime - $thisAm) . "-" . ($endTime - $thisAm);
+                }
+            }
+
+            if (count($windows)) {
+                $attrs[] = 'data-lp-windows="' . Convert::raw2htmlatt(json_encode($windows)). '"';
+            }
         }
 
         if ($owner->ShowTimeblock) {
