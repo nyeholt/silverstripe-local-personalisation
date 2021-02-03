@@ -25,6 +25,10 @@ class PersonalisationExtension extends DataExtension
         'InitState' => 'Varchar',
     ];
 
+    private static $has_one = [
+        'Profile' => PersonalisationProfile::class,
+    ];
+
     private static $defaults = [
         'ShowCount' => 1,
         'HideCount' => 1,
@@ -38,17 +42,43 @@ class PersonalisationExtension extends DataExtension
         ];
 
         $syntax = 'Use + to require all tags to match, and use ! to indicate matching if this tag is "not" present';
+        $tab = $this->owner instanceof PersonalisationProfile ? 'Root.Main' : 'Root.Personalisation';
 
-        $fields->addFieldsToTab('Root.Personalisation', [
-            TextField::create('ShowTags', 'Display tags')->setRightTitle('Show if content is tagged with any of these values (comma separated). ' . $syntax),
-            TextField::create('ShowCount', 'Show count')->setRightTitle('How many times the user has touched a tag for it to trigger show rules on item'),
-            TextField::create('HideTags', 'Hide tags')->setRightTitle('Hide if content is tagged with these values (comma separated). ' . $syntax),
-            TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
-            TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
-            TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
-            DropdownField::create('ShowPreference', 'Display preference', $prefOpts)->setRightTitle('Preferred show/hide option if multiple tags match'),
-            DropdownField::create('InitState', 'Initial display state', $prefOpts)->setEmptyString('Default')->setRightTitle('If this should be displayed in a specific state initially'),
-        ]);
+        $fieldlist = [];
+
+        if (!$this->owner->ProfileID) {
+            $fieldlist = [
+                TextField::create('ShowTags', 'Display tags')->setRightTitle('Show if content is tagged with any of these values (comma separated). ' . $syntax),
+                TextField::create('ShowCount', 'Show count')->setRightTitle('How many times the user has touched a tag for it to trigger show rules on item'),
+                TextField::create('HideTags', 'Hide tags')->setRightTitle('Hide if content is tagged with these values (comma separated). ' . $syntax),
+                TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
+                TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
+                TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
+                DropdownField::create('ShowPreference', 'Display preference', $prefOpts)->setRightTitle('Preferred show/hide option if multiple tags match'),
+                DropdownField::create('InitState', 'Initial display state', $prefOpts)->setEmptyString('Default')->setRightTitle('If this should be displayed in a specific state initially'),
+            ];
+        }
+
+        if (!($this->owner instanceof PersonalisationProfile)) {
+            $opts = PersonalisationProfile::get()->map();
+            $field = DropdownField::create('ProfileID', 'Use this profile', $opts)->setEmptyString('Custom');
+            array_unshift($fieldlist, $field);
+        }
+
+
+        $fields->addFieldsToTab($tab, $fieldlist);
+    }
+
+    protected function p13source()
+    {
+        $owner = $this->owner;
+
+        // are we using a specific profile instead?
+        if ($owner->ProfileID) {
+            $profile = $owner->Profile();
+            $owner = $profile ? $profile : $owner;
+        }
+        return $owner;
     }
 
     public function p13nAttributes()
@@ -57,7 +87,8 @@ class PersonalisationExtension extends DataExtension
         /**
          * @var DataObject
          */
-        $owner = $this->owner;
+        $owner = $this->p13source();
+
         $show = $owner->ShowTags;
         $hide = $owner->HideTags;
 
@@ -93,7 +124,7 @@ class PersonalisationExtension extends DataExtension
         /**
          * @var DataObject
          */
-        $owner = $this->owner;
+        $owner = $this->p13source();
 
         $show = $owner->ShowTags;
         $hide = $owner->HideTags;
