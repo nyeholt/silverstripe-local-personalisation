@@ -216,7 +216,7 @@ class Profile {
          * @param {string} tags
          * @param {number} times
          */
-        const matchesTags = function (tags, numberOfTimes, timeSince) {
+        const matchesTags = function (tags, numberOfTimes, timeSince, windows) {
             if (tags && tags.length > 0) {
                 const matchedTags = [];
                 const requireAllTags = tags[0] === '+';
@@ -267,10 +267,23 @@ class Profile {
             }
         };
 
+        const fitsTimeWindow = function (startEnd, timestamp) {
+
+        };
+
         // figure out based on show / hide rules what
         // to do to elements
         for (let j = 0; j < elements.length; j++) {
             const item = elements[j];
+
+            const window = item.getAttribute('data-lp-windows');
+            if (window && window.length) {
+                const windowOpts = JSON.parse(window);
+                if (windowOpts && windowOpts.length) {
+
+                }
+            }
+
             const showOpts = [
                 item.getAttribute('data-lp-show-tags'),
                 item.getAttribute('data-lp-show-times') || 1,

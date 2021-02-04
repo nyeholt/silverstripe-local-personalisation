@@ -117,7 +117,7 @@ class PersonalisationExtension extends DataExtension
                 if (preg_match("/\d\d:\d\d\s*-\s*\d\d:\d\d/", $window)) {
                     list($start, $end) = preg_split("/\s*-\s*/", $window);
                     $startTime = strtotime(date("Y-m-d " . $start));
-                    $endTime = strtotime(date("Y-m-d " . $start));
+                    $endTime = strtotime(date("Y-m-d " . $end));
                     $thisAm = strtotime(date('Y-m-d 00:00:00'));
 
                     $windows[] = ($startTime - $thisAm) . "-" . ($endTime - $thisAm);
