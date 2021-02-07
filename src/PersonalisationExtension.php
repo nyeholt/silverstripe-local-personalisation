@@ -55,7 +55,7 @@ class PersonalisationExtension extends DataExtension
                 TextField::create('HideCount', 'Hide count')->setRightTitle('How many times the user has touched a tag for it to trigger hide rules on item'),
                 TextField::create('ShowTimeblock', 'Timeframe for show tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'show'"),
                 TextField::create('HideTimeblock', 'Timeframe for hide tags')->setRightTitle("Timeframe (ie -1 week) for which tags must have been created to 'hide'"),
-                TextField::create('ApplicableTime', 'Time of day when tags are evaluated')->setRightTitle('eg 07:00-10:00'),
+                TextField::create('ApplicableTime', 'Time of day when this is in effect')->setRightTitle('eg 07:00-10:00'),
                 DropdownField::create('ShowPreference', 'Display preference', $prefOpts)->setRightTitle('Preferred show/hide option if multiple tags match'),
                 DropdownField::create('InitState', 'Initial display state', $prefOpts)->setEmptyString('Default')->setRightTitle('If this should be displayed in a specific state initially'),
             ];
@@ -117,6 +117,15 @@ class PersonalisationExtension extends DataExtension
 
         if ($owner->HideTimeblock) {
             $attrs[] = 'data-lp-hide-timeblock="' . strtotime($owner->HideTimeblock) . '"';
+        }
+
+        if ($owner->ApplicableTime && preg_match("/\d\d:\d\d\s*-\s*\d\d:\d\d/", $owner->ApplicableTime)) {
+            list($start, $end) = preg_split("/\s*-\s*/", $owner->ApplicableTime);
+            $startTime = strtotime(date("Y-m-d " . $start));
+            $endTime = strtotime(date("Y-m-d " . $end));
+            $thisAm = strtotime(date('Y-m-d 00:00:00'));
+
+            $attrs[] = 'data-lp-applicable="' . Convert::raw2htmlatt(($startTime - $thisAm) . "-" . ($endTime - $thisAm);) . '"';
         }
 
         return implode(" ", $attrs);

@@ -18,7 +18,7 @@ class PersonalisationController extends Controller
         $max = ProfileRule::get()->max('LastEdited');
         $id = ProfileRule::get()->count();
 
-        $key = "rules,$max,$id";
+        $key = md5("rules,$max,$id");
 
         $cache = Injector::inst()->get(CacheInterface::class . '.localPersonalisation');
         $data = $cache->get($key);

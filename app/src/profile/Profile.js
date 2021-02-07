@@ -216,7 +216,7 @@ class Profile {
          * @param {string} tags
          * @param {number} times
          */
-        const matchesTags = function (tags, numberOfTimes, timeSince, windows) {
+        const matchesTags = function (tags, numberOfTimes, timeSince, window) {
             if (tags && tags.length > 0) {
                 const matchedTags = [];
                 const requireAllTags = tags[0] === '+';
@@ -276,12 +276,9 @@ class Profile {
         for (let j = 0; j < elements.length; j++) {
             const item = elements[j];
 
-            const window = item.getAttribute('data-lp-windows');
+            const window = item.getAttribute('data-lp-applicable');
             if (window && window.length) {
-                const windowOpts = JSON.parse(window);
-                if (windowOpts && windowOpts.length) {
 
-                }
             }
 
             const showOpts = [

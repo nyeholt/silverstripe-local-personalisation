@@ -167,7 +167,7 @@ class ProfileRule extends DataObject
             $data['maxdistance'] = $this->MaxPointDistance;
         }
 
-        if ($this->TimeWindow) {
+        if ($this->TimeWindow && is_array($this->TimeWindow->getValues())) {
             $windows = [];
             // how many seconds after midnight is this relevant for?
             foreach ($this->TimeWindow->getValues() as $window) {
