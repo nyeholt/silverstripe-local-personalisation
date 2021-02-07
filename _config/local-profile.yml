@@ -4,3 +4,12 @@ name: local-profile-routes
 SilverStripe\Control\Director:
   rules:
     __personalisation: Symbiote\Personalisation\PersonalisationController
+
+---
+Name: local-profile-cache
+---
+SilverStripe\Core\Injector\Injector:
+  Psr\SimpleCache\CacheInterface.localPersonalisation:
+    factory: SilverStripe\Core\Cache\CacheFactory
+    constructor:
+      namespace: "localPersonalisation"

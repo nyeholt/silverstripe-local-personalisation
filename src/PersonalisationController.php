@@ -2,8 +2,10 @@
 
 namespace Symbiote\Personalisation;
 
+use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 
 class PersonalisationController extends Controller
 {
@@ -13,37 +15,53 @@ class PersonalisationController extends Controller
 
     public static function build_rules()
     {
-        $activeRules = ProfileRuleSet::get()->filter('Active', 1)->sort('ID ASC');
+        $max = ProfileRule::get()->max('LastEdited');
+        $id = ProfileRule::get()->count();
 
-        $version = [];
+        $key = "rules,$max,$id";
 
-        $ruleData = [];
-        $pointData = [];
+        $cache = Injector::inst()->get(CacheInterface::class . '.localPersonalisation');
+        $data = $cache->get($key);
 
-        foreach ($activeRules as $ruleset) {
-            $version[] = $ruleset->VersionMarker;
-            foreach ($ruleset->Rules() as $rule) {
-                $ruleData[] = $rule->toJson();
-            }
-            foreach ($ruleset->Points() as $point) {
-                if (!strpos($point->Location, ',')) {
-                    continue;
+        $set = [];
+
+        if (!$data) {
+            $activeRules = ProfileRuleSet::get()->filter('Active', 1)->sort('ID ASC');
+
+            $version = [];
+
+            $ruleData = [];
+            $pointData = [];
+
+            foreach ($activeRules as $ruleset) {
+                $version[] = $ruleset->VersionMarker;
+                foreach ($ruleset->Rules() as $rule) {
+                    $ruleData[] = $rule->toJson();
                 }
-                list($lat, $lon) = explode(",", $point->Location);
-                $data = [
-                    'title' => $point->Title,
-                    'lat' => (double) $lat,
-                    'lon' => (double) $lon
-                ];
-                $pointData[] = $data;
+                foreach ($ruleset->Points() as $point) {
+                    if (!strpos($point->Location, ',')) {
+                        continue;
+                    }
+                    list($lat, $lon) = explode(",", $point->Location);
+                    $data = [
+                        'title' => $point->Title,
+                        'lat' => (float) $lat,
+                        'lon' => (float) $lon
+                    ];
+                    $pointData[] = $data;
+                }
             }
-        }
 
-        $set = [
-            'rules' => $ruleData,
-            'points' => $pointData,
-            'version' => implode('.', $version)
-        ];
+            $set = [
+                'rules' => $ruleData,
+                'points' => $pointData,
+                'version' => implode('.', $version)
+            ];
+
+            $cache->set($key, json_encode($set));
+        } else {
+            $set = json_decode($data);
+        }
 
         return $set;
     }
