@@ -23,48 +23,7 @@ class PersonalisationController extends Controller
         foreach ($activeRules as $ruleset) {
             $version[] = $ruleset->VersionMarker;
             foreach ($ruleset->Rules() as $rule) {
-                $data = [
-                    'name' => $rule->Title,
-                    'apply' => $rule->Apply ? $rule->Apply->getValues() : [],
-                    'appliesTo' => $rule->AppliesTo,
-                    'time' => $rule->TimeOnPage,
-                ];
-
-                if ($rule->Target) {
-                    $data = array_merge($data, [
-                        'event' => 'click',
-                        'target' => $rule->Target,
-                    ]);
-                }
-
-                if ($rule->Selector) {
-                    $data['selector'] = $rule->Selector;
-                }
-
-                if ($rule->Regex) {
-                    $data['regex'] = $rule->Regex;
-                }
-
-                if ($rule->AppliesTo == 'location') {
-                    $data['matchnearest'] = $rule->NearestPoint;
-                    $data['maxdistance'] = $rule->MaxPointDistance;
-                }
-
-                $extractor = [
-                    'appliesTo' => $rule->ExtractFrom,
-                    'selector' => $rule->ExtractSelector,
-                    'attribute' => $rule->Attribute,
-                    'regex' => $rule->ExtractRegex,
-                ];
-
-                if ($rule->ExtractFrom == 'location') {
-                    $extractor['matchnearest'] = $rule->NearestPoint;
-                    $extractor['maxdistance'] = $rule->MaxPointDistance;
-                }
-
-                $data['extractor'] = $extractor;
-
-                $ruleData[] = $data;
+                $ruleData[] = $rule->toJson();
             }
             foreach ($ruleset->Points() as $point) {
                 if (!strpos($point->Location, ',')) {
@@ -85,6 +44,7 @@ class PersonalisationController extends Controller
             'points' => $pointData,
             'version' => implode('.', $version)
         ];
+
         return $set;
     }
 

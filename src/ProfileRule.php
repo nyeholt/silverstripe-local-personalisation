@@ -39,6 +39,8 @@ class ProfileRule extends DataObject
         'EventData' => 'Varchar(255)',
         'TimeOnPage' => 'Int',
         'Apply' => MultiValueField::class,
+        'TimeWindow' => MultiValueField::class,
+
     ];
 
     private static $applies_to = [
@@ -109,7 +111,8 @@ class ProfileRule extends DataObject
 
         $timeFields = ToggleCompositeField::create('time_fields', 'Time options', [
             DropdownField::create('TimeOnPage', 'Time on page', ['0' => '0', '3' => '3', '10' => '10', '30' => '30', '120' => '120'])
-                ->setRightTitle("User must be on page at least this many seconds before tagging occurs")
+                ->setRightTitle("User must be on page at least this many seconds before tagging occurs"),
+            MultiValueTextField::create('TimeWindow', 'Time window')->setRightTitle("Time windows this is applicable for, eg 07:00-10:00"),
             // TextField::create('Timeblock', 'Timeblock')
             //     ->setRightTitle('(NOT IMPLEMENTED) ie 8:00-10:30 to indicate that this is only triggered during this window of the day')
         ]);
@@ -137,13 +140,64 @@ class ProfileRule extends DataObject
 
     public function toJson()
     {
-        return [
+        $data = [
             'name' => $this->Title,
+            'apply' => $this->Apply ? $this->Apply->getValues() : [],
             'appliesTo' => $this->AppliesTo,
-            'regex' => $this->Regex,
-            'selector' => $this->Selector,
-            'attrbiute' => $this->Attribute,
-            'apply' => $this->Apply->getValues(),
+            'time' => $this->TimeOnPage,
         ];
+
+        if ($this->Target) {
+            $data = array_merge($data, [
+                'event' => 'click',
+                'target' => $this->Target,
+            ]);
+        }
+
+        if ($this->Selector) {
+            $data['selector'] = $this->Selector;
+        }
+
+        if ($this->Regex) {
+            $data['regex'] = $this->Regex;
+        }
+
+        if ($this->AppliesTo == 'location') {
+            $data['matchnearest'] = $this->NearestPoint;
+            $data['maxdistance'] = $this->MaxPointDistance;
+        }
+
+        if ($this->TimeWindow) {
+            $windows = [];
+            // how many seconds after midnight is this relevant for?
+            foreach ($this->TimeWindow->getValues() as $window) {
+                if (preg_match("/\d\d:\d\d\s*-\s*\d\d:\d\d/", $window)) {
+                    list($start, $end) = preg_split("/\s*-\s*/", $window);
+                    $startTime = strtotime(date("Y-m-d " . $start));
+                    $endTime = strtotime(date("Y-m-d " . $end));
+                    $thisAm = strtotime(date('Y-m-d 00:00:00'));
+
+                    $windows[] = ($startTime - $thisAm) . "-" . ($endTime - $thisAm);
+                }
+            }
+            $data['windows'] = $windows;
+        }
+
+        $extractor = [
+            'appliesTo' => $this->ExtractFrom,
+            'selector' => $this->ExtractSelector,
+            'attribute' => $this->Attribute,
+            'regex' => $this->ExtractRegex,
+        ];
+
+        if ($this->ExtractFrom == 'location') {
+            $extractor['matchnearest'] = $this->NearestPoint;
+            $extractor['maxdistance'] = $this->MaxPointDistance;
+        }
+
+        $data['extractor'] = $extractor;
+
+        return $data;
     }
+
 }
