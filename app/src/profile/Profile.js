@@ -148,6 +148,19 @@ class Profile {
                 continue;
             }
             let isMatch = false;
+
+            // check all the time windows that the rule applies to
+            // and make sure we're in at least one
+            if (rule.windows && rule.windows.length) {
+                const hasWindow = rule.windows.filter((item) => {
+                    return this.isTimeInWindow(item);
+                });
+                if (hasWindow.length == 0) {
+                    console.log("Profile.js: Ignoring rule out of time band");
+                    continue;
+                }
+            }
+
             if (rule.event === 'click' && rule.target) {
                 // we only evaluate this rule on a specific click action
                 this.clickRules[rule.target] = i;
@@ -198,6 +211,23 @@ class Profile {
         if (matched) {
             this.save();
         }
+    }
+
+    isTimeInWindow(startEnd, timestamp) {
+        const now = new Date();
+        const thisAm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dayStart = thisAm.getTime() / 1000;
+
+        if (!timestamp) {
+            timestamp = Math.ceil(now.getTime() / 1000);
+        }
+
+        const startTime = parseInt(startEnd[0]) + dayStart;
+        const endTime = parseInt(startEnd[1]) + dayStart;
+
+        // console.log("Comparing ", timestamp, startTime, endTime);
+
+        return timestamp > startTime && timestamp < endTime;
     }
 
     checkContent() {
@@ -261,14 +291,10 @@ class Profile {
                     matchedTags.push(matchTags[i]);
                 }
 
-                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) :  matchedTags.length > 0;
+                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) : matchedTags.length > 0;
 
                 return hasMatch ? matchedTags : null;
             }
-        };
-
-        const fitsTimeWindow = function (startEnd, timestamp) {
-
         };
 
         // figure out based on show / hide rules what
@@ -277,7 +303,11 @@ class Profile {
             const item = elements[j];
 
             const window = item.getAttribute('data-lp-applicable');
-            if (window && window.length) {
+            if (window && window.length && window.indexOf('-') > 0) {
+                if (!this.isTimeInWindow(window.split('-'))) {
+                    console.log("missed time band");
+                    continue;
+                }
 
             }
 

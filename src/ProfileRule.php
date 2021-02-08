@@ -177,7 +177,7 @@ class ProfileRule extends DataObject
                     $endTime = strtotime(date("Y-m-d " . $end));
                     $thisAm = strtotime(date('Y-m-d 00:00:00'));
 
-                    $windows[] = ($startTime - $thisAm) . "-" . ($endTime - $thisAm);
+                    $windows[] = [($startTime - $thisAm), ($endTime - $thisAm)];
                 }
             }
             $data['windows'] = $windows;

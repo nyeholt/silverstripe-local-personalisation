@@ -125,7 +125,7 @@ class PersonalisationExtension extends DataExtension
             $endTime = strtotime(date("Y-m-d " . $end));
             $thisAm = strtotime(date('Y-m-d 00:00:00'));
 
-            $attrs[] = 'data-lp-applicable="' . Convert::raw2htmlatt(($startTime - $thisAm) . "-" . ($endTime - $thisAm);) . '"';
+            $attrs[] = 'data-lp-applicable="' . Convert::raw2htmlatt(($startTime - $thisAm) . "-" . ($endTime - $thisAm)) . '"';
         }
 
         return implode(" ", $attrs);
