@@ -190,7 +190,7 @@ class Profile {
                 matched = true;
                 let matchData = this.extractData(rule);
                 if (matchData && matchData.length > 0) {
-                    console.log("Profile.js: apply from page match", matchData);
+                    console.log("Profile.js: apply from location match", matchData);
                     this.applyRule(rule, matchData);
                 }
             }
@@ -233,7 +233,7 @@ class Profile {
                     // AND this tag isn't being used in the 'not present' sense.
                     // we shoulding continue
                     if ((!myTags[findTag] && !negated) || (myTags[findTag] && negated)) {
-                        break;
+                        continue;
                     }
 
                     console.log("Profile.Js: " + matchTags[i] + " matched profile");
