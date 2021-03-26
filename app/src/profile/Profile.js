@@ -233,7 +233,7 @@ class Profile {
                     // AND this tag isn't being used in the 'not present' sense.
                     // we shoulding continue
                     if ((!myTags[findTag] && !negated) || (myTags[findTag] && negated)) {
-                        break;
+                        continue;
                     }
 
                     console.log("Profile.Js: " + matchTags[i] + " matched profile");
