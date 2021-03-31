@@ -3,8 +3,16 @@ import { loadProfile } from "./profile/Profile";
 import './style/profile.scss';
 
 if (window.PERSONSALISATION_RULESET) {
+    // Wait until after the browser loads before loading profile
+    window.addEventListener("load", function () {
+        const profile = loadProfile(window.PERSONSALISATION_RULESET.rules, window.PERSONSALISATION_RULESET.points, window.PERSONSALISATION_RULESET.version);
 
-    const profile = loadProfile(window.PERSONSALISATION_RULESET.rules, window.PERSONSALISATION_RULESET.points, window.PERSONSALISATION_RULESET.version);
+        profile.evaluateRequest();
+
+        window.DEBUG_SHOW_PROFILE = function () {
+            console.log(profile.data);
+        }
+    });
 
     const dummy_Data = [
         {
@@ -58,12 +66,6 @@ if (window.PERSONSALISATION_RULESET) {
             ]
         }
     ];
-
-    profile.evaluateRequest();
-
-    window.DEBUG_SHOW_PROFILE = function () {
-        console.log(profile.data);
-    }
 
 } else {
     console.warn("Profile.js: PERSONSALISATION_RULESET not found");
