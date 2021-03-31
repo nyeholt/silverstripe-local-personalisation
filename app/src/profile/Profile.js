@@ -592,15 +592,12 @@ class Profile {
     }
 
     triggerEvent(name, properties, context) {
-        // Amir: wait until after the browser loads this object before dispacting any events
-        window.onload = function () {
-            if (!context) {
-                context = document;
-            }
-            var param = properties ? { detail: properties } : null;
-            var event = new CustomEvent(name, param);
-            context.dispatchEvent(event);
-        };
+        if (!context) {
+            context = document;
+        }
+        var param = properties ? { detail: properties } : null;
+        var event = new CustomEvent(name, param);
+        context.dispatchEvent(event);
     }
 
     distance(lat1, lon1, lat2, lon2, unit) {
