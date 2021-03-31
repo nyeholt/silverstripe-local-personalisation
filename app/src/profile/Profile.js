@@ -261,7 +261,7 @@ class Profile {
                     matchedTags.push(matchTags[i]);
                 }
 
-                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) :  matchedTags.length > 0;
+                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) : matchedTags.length > 0;
 
                 return hasMatch ? matchedTags : null;
             }
