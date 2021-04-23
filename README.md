@@ -13,7 +13,7 @@ user profile.
 ## Composer Install
 
 ```
-composer require symbiote/silverstripe-local-profile:~1.0
+composer require symbiote/silverstripe-local-personalisation:~1.0
 ```
 
 ## Documentation
