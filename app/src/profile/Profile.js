@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import uuidv4 from "uuid/v4";
 
 let profile;
 
@@ -444,6 +444,7 @@ class Profile {
      */
     getContentFor(rule) {
         let checkAgainst = null;
+
         if (rule.appliesTo == 'url') {
             checkAgainst = location.href;
         } else if (rule.appliesTo == 'referrer') {
