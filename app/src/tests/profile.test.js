@@ -18,19 +18,15 @@ const rules = [
         ]
     },
     {
-        name: "RouteDetail",
-        appliesTo: 'url',
-        regex: 'route/(\\d+)/([^/]+)',
-        apply: [
-            'route-detail',
-            'route-$2',
-        ]
-    },
-    {
         name: "Subject",
         appliesTo: 'content',
         selector: 'meta[name="title"]',
-        attribute: 'content',
+        extractor: {
+            appliesTo: "content",
+            selector: 'meta[name="title"]',
+            attribute: "content",
+            regex: "",
+        },
         apply: [
             '$0',
         ]
@@ -61,9 +57,11 @@ const rules = [
 ];
 
 describe('Profile.js', () => {
-    beforeAll(() => {
+    beforeEach(() => {
         delete window.location;
         window.location = { reload: jest.fn(), href: "" };
+
+        localStorage.clear();
     });
 
 
@@ -73,9 +71,6 @@ describe('Profile.js', () => {
 
         const stored = JSON.parse(localStorage.getItem('lp_user_state'));
         expect(stored.version).toEqual("2.1");
-
-        localStorage.clear();
-
     });
 
     test('Profile reloads data', () => {
@@ -94,8 +89,6 @@ describe('Profile.js', () => {
 
         expect(profile.data.uid).not.toEqual(stored.uid);
 
-        localStorage.clear();
-
     });
 
 
@@ -107,14 +100,57 @@ describe('Profile.js', () => {
         profile.checkRules();
 
         expect(profile.data.tags['route-timetable'].acc.length).toBe(1);
-
-        const div = document.createElement('div')
-        div.innerHTML = `
-        <label for="username">Username</label>
-        <input id="username" />
-        <button>Print Username</button>
-    `
     });
 
 
+    test('CSS rule evaluated', () => {
+        let profile = loadProfile([rules[1]], [], 1);
+
+        const div = document.createElement('div')
+        div.innerHTML = `
+            <meta name="title" content="trains" />
+        `
+        document.body.appendChild(div);
+        profile.checkRules();
+
+        expect(profile.data.tags['trains'].acc.length).toBe(1);
+    })
+
+    test('CSS rule content extraction', () => {
+        let profile = loadProfile([{
+            name: "Test content",
+            appliesTo: 'content',
+            selector: '#thing',
+            extractor: {
+                appliesTo: "content",
+                selector: '#thing',
+                attribute: "#content",
+                regex: "",
+            },
+            apply: [
+                '$0',
+            ]
+        },], [], 1);
+
+        const div = document.createElement('div')
+        div.innerHTML = `
+            <span id="thing">Label</span>
+        `
+        document.body.appendChild(div);
+        profile.checkRules();
+        expect(profile.data.tags['label'].acc.length).toBe(1);
+    });
+
+    test('Referer rule evaluated', () => {
+        let profile = loadProfile([rules[1]], [], 1);
+
+        const div = document.createElement('div')
+        div.innerHTML = `
+            <meta name="title" content="trains" />
+        `
+        document.body.appendChild(div);
+        profile.checkRules();
+
+        expect(profile.data.tags['trains'].acc.length).toBe(1);
+    })
 });

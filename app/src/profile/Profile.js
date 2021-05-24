@@ -424,6 +424,7 @@ class Profile {
                     data.push(elem.getAttribute(extractor.attribute));
                 }
             });
+
         } else if (extractor.regex) {
             let checkAgainst = this.getContentFor(extractor);
             // check the regex
