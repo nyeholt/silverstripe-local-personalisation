@@ -203,7 +203,7 @@ class Profile {
                 matched = true;
                 let matchData = this.extractData(rule);
                 if (matchData && matchData.length > 0) {
-                    console.log("Profile.js: apply from page match", matchData);
+                    console.log("Profile.js: apply from location match", matchData);
                     this.applyRule(rule, matchData);
                 }
             }
@@ -239,64 +239,6 @@ class Profile {
             return;
         }
 
-        /**
-         * Do the passed in tags match the tags on a
-         * given element?
-         *
-         * @param {string} tags
-         * @param {number} times
-         */
-        const matchesTags = function (tags, numberOfTimes, timeSince, window) {
-            if (tags && tags.length > 0) {
-                const matchedTags = [];
-                const requireAllTags = tags[0] === '+';
-                const matchTags = tags.replace("+", "").replace(" ", "").split(',');
-                for (let i = 0; i < matchTags.length; i++) {
-                    if (matchTags[i].length <= 0) {
-                        continue;
-                    }
-
-                    const negated = matchTags[i][0] == '!';
-                    const findTag = matchTags[i].replace("!", "");
-
-                    // if we didn't find the tags in my list of tags,
-                    // AND this tag isn't being used in the 'not present' sense.
-                    // we shoulding continue
-                    if ((!myTags[findTag] && !negated) || (myTags[findTag] && negated)) {
-                        break;
-                    }
-
-                    console.log("Profile.Js: " + matchTags[i] + " matched profile");
-
-                    const thisTag = myTags[findTag];
-                    const validHits = [];
-                    if (timeSince > 0 && thisTag) {
-                        const timeSinceMs = timeSince * 1000;
-                        validHits = thisTag.acc.filter((item) => {
-                            return item.t > timeSinceMs;
-                        });
-                    } else {
-                        validHits = thisTag ? thisTag.acc : [];
-                    }
-
-                    // check the count
-                    if (numberOfTimes > 1) {
-                        let timesTriggered = validHits || [];
-                        if (numberOfTimes > timesTriggered.length) {
-                            break;
-                        }
-                    }
-
-                    // we want to match inclusive of a negation flag
-                    matchedTags.push(matchTags[i]);
-                }
-
-                const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) : matchedTags.length > 0;
-
-                return hasMatch ? matchedTags : null;
-            }
-        };
-
         // figure out based on show / hide rules what
         // to do to elements
         for (let j = 0; j < elements.length; j++) {
@@ -308,23 +250,24 @@ class Profile {
                     console.log("missed time band");
                     continue;
                 }
-
             }
 
             const showOpts = [
                 item.getAttribute('data-lp-show-tags'),
                 item.getAttribute('data-lp-show-times') || 1,
-                item.getAttribute('data-lp-show-timeblock') || 0
+                item.getAttribute('data-lp-show-timeblock') || 0,
+                myTags
             ];
 
             const hideOpts = [
                 item.getAttribute('data-lp-hide-tags'),
                 item.getAttribute('data-lp-hide-times') || 1,
-                item.getAttribute('data-lp-hide-timeblock') || 0
+                item.getAttribute('data-lp-hide-timeblock') || 0,
+                myTags
             ];
 
-            const showMatches = matchesTags.apply(this, showOpts);
-            const hideMatches = matchesTags.apply(this, hideOpts);
+            const showMatches = this.matchesTags.apply(this, showOpts);
+            const hideMatches = this.matchesTags.apply(this, hideOpts);
 
             // see if the content has a preference for show / hide
             if (showMatches || hideMatches) {
@@ -359,6 +302,64 @@ class Profile {
                     item.classList.add('lp-hide');
                 }
             }
+        }
+    }
+
+    /**
+     * Do the passed in tags match the tags on a
+     * given element?
+     *
+     * @param {string} tags
+     * @param {number} times
+     */
+     matchesTags(tags, numberOfTimes, timeSince, myTags, window) {
+        if (tags && tags.length > 0) {
+            const matchedTags = [];
+            const requireAllTags = tags[0] === '+';
+            const matchTags = tags.replace("+", "").replace(" ", "").split(',');
+            for (let i = 0; i < matchTags.length; i++) {
+                if (matchTags[i].length <= 0) {
+                    continue;
+                }
+
+                const negated = matchTags[i][0] == '!';
+                const findTag = matchTags[i].replace("!", "");
+
+                // if we didn't find the tags in my list of tags,
+                // AND this tag isn't being used in the 'not present' sense.
+                // we shoulding continue
+                if ((!myTags[findTag] && !negated) || (myTags[findTag] && negated)) {
+                    continue;
+                }
+
+                console.log("Profile.Js: " + matchTags[i] + " matched profile");
+
+                const thisTag = myTags[findTag];
+                const validHits = [];
+                if (timeSince > 0 && thisTag) {
+                    const timeSinceMs = timeSince * 1000;
+                    validHits = thisTag.acc.filter((item) => {
+                        return item.t > timeSinceMs;
+                    });
+                } else {
+                    validHits = thisTag ? thisTag.acc : [];
+                }
+
+                // check the count
+                if (numberOfTimes > 1) {
+                    let timesTriggered = validHits || [];
+                    if (numberOfTimes > timesTriggered.length) {
+                        break;
+                    }
+                }
+
+                // we want to match inclusive of a negation flag
+                matchedTags.push(matchTags[i]);
+            }
+
+            const hasMatch = requireAllTags ? (matchedTags.length == matchTags.length) : matchedTags.length > 0;
+
+            return hasMatch ? matchedTags : null;
         }
     }
 

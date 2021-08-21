@@ -153,4 +153,25 @@ describe('Profile.js', () => {
 
         expect(profile.data.tags['trains'].acc.length).toBe(1);
     })
+
+
+    test('Test for "any" tag match', () => {
+        // see https://github.com/nyeholt/silverstripe-local-personalisation/pull/4/commits/013b5779f3b1f66f401cf7cc77f5e601ead2900c
+        const div = document.createElement('div')
+        div.innerHTML = `
+            <div data-lp-hide-tags="tag1,tag2" data-lp-prefer="hide" class="lp-show lp-item" id="hide" />
+        `;
+
+        document.body.appendChild(div);
+
+        let profile = loadProfile([rules[1]], [], 1);
+
+        profile.addTag("tag2");
+
+        profile.checkContent();
+
+        let testDiv = document.getElementById("hide");
+        expect(testDiv.classList.contains('lp-hide')).toBeTruthy();
+
+    });
 });
