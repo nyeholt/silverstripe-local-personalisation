@@ -13,12 +13,19 @@ class PersonalisationController extends Controller
         'rules',
     ];
 
-    public static function build_rules()
+    /**
+     * Build a personalisation rule set based on a given
+     * filter
+     */
+    public static function build_rules($ruleSetFilter = [])
     {
         $max = ProfileRule::get()->max('LastEdited');
+        $setMax = ProfileRuleSet::get()->max('LastEdited');
         $id = ProfileRule::get()->count();
 
-        $key = md5("rules,$max,$id");
+        $key = md5("rules,$max,$id,$setMax," . json_encode($ruleSetFilter));
+
+        $ruleSetFilter['Active'] = 1;
 
         $cache = Injector::inst()->get(CacheInterface::class . '.localPersonalisation');
         $data = $cache->get($key);
@@ -26,7 +33,7 @@ class PersonalisationController extends Controller
         $set = [];
 
         if (!$data) {
-            $activeRules = ProfileRuleSet::get()->filter('Active', 1)->sort('ID ASC');
+            $activeRules = ProfileRuleSet::get()->filter($ruleSetFilter)->sort('ID ASC');
 
             $version = [];
 

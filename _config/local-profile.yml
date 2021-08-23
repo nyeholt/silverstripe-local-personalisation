@@ -13,3 +13,4 @@ SilverStripe\Core\Injector\Injector:
     factory: SilverStripe\Core\Cache\CacheFactory
     constructor:
       namespace: "localPersonalisation"
+      defaultLifetime: 600
